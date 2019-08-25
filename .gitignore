@@ -1,4 +1,6 @@
 
+# Legg til nye helt på bunn
+
 # Created by https://www.gitignore.io/api/linux,python,sublimetext
 # Edit at https://www.gitignore.io/?templates=linux,python,sublimetext
 
@@ -176,3 +178,13 @@ bh_unicode_properties.cache
 GitHub.sublime-settings
 
 # End of https://www.gitignore.io/api/linux,python,sublimetext
+
+
+# Lagt til av oss
+
+*.xyz
+testfile.py
+*.dump
+*.png
+*.gif
+*.pdf
