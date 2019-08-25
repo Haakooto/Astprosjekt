@@ -1,3 +1,5 @@
 Disclaimer: log written on 2508, explaining what is done before
 
 Having read the part1 description I trew together a short program implementing the gaussian distrubution. Using np.trapz to integrate with a fixed dx determining accuracy. It also contains a function for finding FWHM numerically, using np.argwhere to make array where y is max(y)/2. last - first value of this gives FWHM, but if dx too large or tolerance low array is empty. Also proved FWHM = 2sqrt(2ln2)sigma analytically. Thoughtprosess expressed in notes by hand. 
+
+started colab with Tobias. helped him setup git(hub), overleaf. 
