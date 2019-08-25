@@ -1,0 +1,11 @@
+TL;DR: made framework for engine
+
+Started on part 1B, gas chambre. Made very simmilar to Argon from fysmek grand challenge. Tried to not exactly copy that, though structure is exactly same. The engine consists of Ne small engines, all the same, with N particles, T temperature. When particle hit wall normal for d-coord, speed in d-direction is simply fliped; elastic collision. Theres no forces between particles. Makes integrating very easy; speed is constant. Using Euler_Cromer, though could change. probably not nessacerry, no acceleration -> energy always constant. 
+
+Thinkng of making nozzle low sylinder on middle of floor. when particle in this the momentum in z-direcion is accounted for, particle is moved to middle top of box with velocity from maxbolz. would this keep all constant? discuss implementation with T, find theoretical implications of implementation we choose.
+
+Have write method for viz in ovito for chech sensible movement.
+
+should scale calculation to dimensionless units? 1e-6, 1e-9 and 3e+3 dont mesh too well...     (copy scaling from fysmek gcp)
+
+should rewrite current class from engine to small engine, make function for calculating number of small engines used and efficiency of them to hit target params. 
