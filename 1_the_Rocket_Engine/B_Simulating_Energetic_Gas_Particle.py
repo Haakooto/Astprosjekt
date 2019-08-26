@@ -1,6 +1,8 @@
 import sys, os
 import numpy as np
 
+np.random.seed(1444000)
+
 class Engine():
 	def __init__(self, N_particles, N_engines, Size, Temperature, dt, time_steps):
 		self.N = N_particles #number of particles in one engine
@@ -20,14 +22,29 @@ class Engine():
 		self.V[0] = np.random.uniform(-10,10,(self.N,3)) #temp init velo dist
 		#self.V[0] = function for maxwell_boltzman distrubution
 
+		self.count = np.zeros(self.ts)
+
+	def in_nozzle(self, A, r = 0.05, h = 0.01):
+		r = self.S * r
+		h = self.S * h
+		#determines particle inside sylindrical nozzle
+		circle = A[:,0] ** 2 + A[:,1] ** 2 <= r ** 2
+		height = A[:,2] <= h - self.S / 2
+
+		return np.logical_and(circle, height)
+
 	def simulate(self):
 
-		for i in range(self.ts - 1): #for every timestep
-			self.Euler_Cromer(i)
+		for i in range(1, self.ts): #for every timestep
+			self.Euler_Cromer(i - 1)
 
 			#implement nozzle here
+			ps = self.in_nozzle(self.R[i])
+			self.count[i] = sum(ps) 
+			self.R[i][ps] = [0,0,self.S/2] #move particle to top
+			#self.V[i][ps] = function for maxwell_boltzmann dist
 
-			self.V[i + 1] = np.where(abs(self.R[i + 1]) < self.S / 2, self.V[i], - self.V[i]) #if particle at wall, flip speed
+			self.V[i] = np.where(abs(self.R[i]) < self.S / 2, self.V[i], -self.V[i]) #if particle at wall, flip speed
 
 			#calculate stuff here
 			
@@ -50,19 +67,19 @@ class Engine():
 					outfile.write("\n")
 			outfile.close()
 
-N = 1000
+N = 100
 ne = 1
 L = 6
 T = 3000
 dt = 0.01
-t = 100
+t = 10000
 
 inp = lambda : [N, ne, L, T, dt, t]
 
 System = Engine(*inp())
 System.simulate()
 System.write("test.xyz")
-
+print(sum(System.count))
 
 # #array = np.zeros((N,3))
 # array = np.random.uniform(-l, l, (1,N,3))
