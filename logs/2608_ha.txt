@@ -1,0 +1,1 @@
+implemented a nozzle, like discussed in log yesterday. Simple, just chechs every timestep if any particles are inside a low sylinder on floor. returns bool array, and we can use this to count particles, move them (they flew out, have to reappear on top to keep density const) and give new speed.
