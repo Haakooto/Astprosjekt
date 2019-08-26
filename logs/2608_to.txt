@@ -1,0 +1,3 @@
+Finished the programming in part 1A, and changed some of the previous code. Made the steps in the integration larger, so the program runs quicker.
+
+Did the last part of 1A by hand, except that I didnt get one of the answers excactly right, which we might look at tomorrow. 
