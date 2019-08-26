@@ -1,6 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+mass = 3.347E-27
+T = 3000
+k = 1.38E-23
+
 def f(mu, sig, x):
 	exp = -0.5 * (x - mu)**2 * sig**(-2)
 	return (np.sqrt(2 * np.pi) * sig)**(-1) * np.exp(exp)
@@ -42,14 +46,14 @@ def FWHM(X, Y, sig):
 
 	return a,s,d
 
-
-#x, y, A = P(-3,3,0,1)
+width = 2.5E4
+x, y, A = P(-width,width,0,np.sqrt(k*T/mass))
 #print(A)
 #a, s, d = FWHM(x, y, 1)
 #print(s,d)
-# plt.plot(x,y)
-# plt.grid()
-# plt.show()
+plt.plot(x,y)
+plt.grid()
+plt.show()
 
 x, y = PMaxBoz(-10,10)
 plt.plot(x,y)
