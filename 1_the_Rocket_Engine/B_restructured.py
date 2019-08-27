@@ -9,7 +9,7 @@ np.random.seed(1444000)
 class Engine():
 	def __init__(self, N_part, N_engines, Temp, Length, dt, ts):
 		self.N = N_part
-		self.Ne = Ne
+		self.Ne =Ne
 		self.T = Temp
 		self.L = Length
 		self.l = Length / 2
@@ -19,7 +19,7 @@ class Engine():
 
 		self.sigma = np.sqrt(k_B * Temp / m)
 
-	def build_rocket(self):
+	def build(self):
 
 		self.R = np.random.uniform(0, self.L, (self.N, 3)) - self.l #Array containing position. 2dim, [particle][dimension]
 		self.V = np.random.normal(0, self.sigma, (self.N, 3)) #array containing velocity. Like R
@@ -28,17 +28,41 @@ class Engine():
 
 	def ignite(self):
 
+		xyz = Engine.Ovito()
+
 		for t in range(self.ts):
+			print(t)
+			xyz.write(self.R)
+
 			self.R += self.V * self.dt #Updating position of particles. 
 			#No internal forces; acceleration in 0
 
 			outside_box = np.where(abs(self.R) > self.l)
 
 			self.V[outside_box] *= -1
-			
 
+		xyz.close()
 	def performance(self):
 		pass
+
+	class Ovito():
+		def __init__(self, name = "test.xyz"):
+			here = os.path.dirname(os.path.realpath(__file__))
+			filepath = os.path.join(here, name) #creates file in specified directory
+				
+			self.out = open(filepath, "w") 
+
+		def write(self, pos):
+			out = self.out
+
+			out.write(str(len(pos)) + "\n")
+			out.write("coord x y z \n")
+			for p in pos:
+				out.write(str(p)[1:-1] + "\n")
+
+		def close(self):
+			self.out.close()
+
 
 # Setting constants
 k_B = const.k_B #boltzmann constant
@@ -47,14 +71,16 @@ m = const.m_H2 #particle mass
 # Variables
 T = 3000 #temperature in K
 L = 1e-6 #lengt of box in m
-N = 1e5 #number of praticles
+N = int(1e5) #number of praticles
 
 Ne = 1 #numer of engineboxes
 
 dt = 1e-9
 ts = 1000
 
-sigma = np.sqrt(k_B * T / m)
-
 inp = lambda : [N, Ne, T, L, dt, ts]
+
+rocket = Engine(*inp())
+rocket.build()
+rocket.ignite()
 
