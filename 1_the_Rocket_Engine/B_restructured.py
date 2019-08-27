@@ -28,11 +28,7 @@ class Engine():
 
 	def ignite(self):
 
-		xyz = Engine.Ovito()
-
 		for t in range(self.ts):
-			print(t)
-			xyz.write(self.R)
 
 			self.R += self.V * self.dt #Updating position of particles. 
 			#No internal forces; acceleration in 0
@@ -41,27 +37,9 @@ class Engine():
 
 			self.V[outside_box] *= -1
 
-		xyz.close()
 	def performance(self):
 		pass
 
-	class Ovito():
-		def __init__(self, name = "test.xyz"):
-			here = os.path.dirname(os.path.realpath(__file__))
-			filepath = os.path.join(here, name) #creates file in specified directory
-				
-			self.out = open(filepath, "w") 
-
-		def write(self, pos):
-			out = self.out
-
-			out.write(str(len(pos)) + "\n")
-			out.write("coord x y z \n")
-			for p in pos:
-				out.write(str(p)[1:-1] + "\n")
-
-		def close(self):
-			self.out.close()
 
 
 # Setting constants
