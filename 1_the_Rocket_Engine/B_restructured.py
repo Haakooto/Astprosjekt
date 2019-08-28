@@ -16,8 +16,15 @@ class Engine():
 
 		self.dt = dt
 		self.ts = ts
+		self.time = dt * ts
 
-		self.sigma = np.sqrt(k_B * Temp / m)
+		self.sigma = np.sqrt(k_B * Temp / mass)
+
+		self.consume = 0
+		self.mom = 0
+		self.avgV = np.zeros(self.ts - 1)
+
+		self.m = 0
 
 	def build(self):
 
@@ -30,30 +37,51 @@ class Engine():
 
 		for t in range(self.ts):
 
-			self.R += self.V * self.dt #Updating position of particles. 
-			#No internal forces; acceleration in 0
-
 			outside_box = np.where(abs(self.R) > self.l)
+			
+			absvel = abs(self.V[outside_box])
+			
+			if t != 0:
+				self.avgV[t - 1] = np.mean(absvel)
+
+			self.mom += sum(absvel) * mass
+			self.consume += sum(outside_box[1])
 
 			self.V[outside_box] *= -1
 
-	def performance(self):
-		pass
+			self.m = max(self.m, self.R.max())
 
+			self.R += self.V * self.dt #Updating position of particles. 
+			#No internal forces; acceleration in 0
+
+	def performance(self):
+		if self.m > self.l * 1.1:
+			print("Particles left the box")
+		thrust = self.mom / 24 / self.time
+		consume = self.consume * mass / 24 / self.time
+		exhaustv = np.mean(self.avgV)
+		print("Thrust: ", thrust)
+		print("mass consumed: ", consume)
+		print("exhaust V: ", consume)
+
+		dv = 12819
+		mf = 1100
+		dm = mf * np.exp(dv / exhaustv) - mf
+		print(f"mass consumed: {dm}")
 
 
 # Setting constants
 k_B = const.k_B #boltzmann constant
-m = const.m_H2 #particle mass
+mass = const.m_H2 #particle mass
 
 # Variables
-T = 3000 #temperature in K
+T = 4000 #temperature in K
 L = 1e-6 #lengt of box in m
 N = int(1e5) #number of praticles
 
 Ne = 1 #numer of engineboxes
 
-dt = 1e-9
+dt = 1e-12
 ts = 1000
 
 inp = lambda : [N, Ne, T, L, dt, ts]
@@ -61,4 +89,4 @@ inp = lambda : [N, Ne, T, L, dt, ts]
 rocket = Engine(*inp())
 rocket.build()
 rocket.ignite()
-
+rocket.performance()
