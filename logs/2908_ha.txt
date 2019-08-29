@@ -1,0 +1,3 @@
+added to Engine a method for validating particle sim. Tests if particles left the box too much, plots histogram of velocities.
+
+ Renamed files to reflect more unified subparts.
