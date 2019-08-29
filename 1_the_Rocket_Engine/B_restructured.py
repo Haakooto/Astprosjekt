@@ -54,20 +54,42 @@ class Engine():
 			self.R += self.V * self.dt #Updating position of particles. 
 			#No internal forces; acceleration in 0
 
+	def test(self): #Some tests to validate simulation
+		if self.m > self.l * 1.1: 
+			#if timestep is too high, particles will go far outside
+			#This tests if particles always are relatively close to the box
+			print("Particles left the box, timestep is too high")
+		else:
+			print("Timestep is good")
+
+		#plot histogram of vx, vy ,vz and V
+		for x, y in enumerate(["x", "y", "z"]): 
+			hist = plt.hist(self.V[:,x], bins = "auto")
+			plt.plot([0,0], [0,hist[0].max()])
+			plt.xlabel(f"velocity in {y} direction")
+			plt.ylabel(f"number of particles in bin")
+			plt.title(f"Histogram of velocities in {y} direction")
+			plt.show()
+		
+		V = np.linalg.norm(self.V, axis = 1)
+		plt.hist(V, bins = "auto")
+		plt.xlabel("velocity")
+		plt.ylabel("number of particles with velocity")
+		plt.title("Histogram of velocities")
+		plt.show()
+
 	def performance(self):
-		if self.m > self.l * 1.1:
-			print("Particles left the box")
 		thrust = self.mom / 24 / self.time
+		print("Thrust [N/s]: ", thrust)
 		consume = self.consume * mass / 24 / self.time
+		print("mass consumed [kg/s]: ", consume)
 		exhaustv = np.mean(self.avgV)
-		print("Thrust: ", thrust)
-		print("mass consumed: ", consume)
-		print("exhaust V: ", consume)
+		print("exhaust V [m/s]: ", consume)
 
 		dv = 12819
 		mf = 1100
 		dm = mf * np.exp(dv / exhaustv) - mf
-		print(f"mass consumed: {dm}")
+		print(f"mass consumed to reach escape velocity: {dm}")
 
 
 # Setting constants
@@ -89,4 +111,5 @@ inp = lambda : [N, Ne, T, L, dt, ts]
 rocket = Engine(*inp())
 rocket.build()
 rocket.ignite()
+rocket.test()
 rocket.performance()
