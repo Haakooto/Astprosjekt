@@ -9,7 +9,7 @@ np.random.seed(1444000)
 class Engine():
 	def __init__(self, N_part, N_engines, Temp, Length, dt, ts):
 		self.N = N_part
-		self.Ne =Ne
+		self.Ne = Ne
 		self.T = Temp
 		self.L = Length
 		self.l = Length / 2
@@ -38,21 +38,26 @@ class Engine():
 		for t in range(self.ts):
 
 			outside_box = np.where(abs(self.R) > self.l)
-			
-			absvel = abs(self.V[outside_box])
-			
-			if t != 0:
+			#particles outside box, [particle][coord outside]
+
+			absvel = abs(self.V[outside_box]) 
+			#abs to account for which side of box
+
+			if t != 0: #at t = 0 all are inside
 				self.avgV[t - 1] = np.mean(absvel)
+				#average v of particles that leave box in coordinate
+				#exhaust velocity
 
-			self.mom += sum(absvel) * mass
-			self.consume += sum(outside_box[1])
-
-			self.V[outside_box] *= -1
+			self.mom += sum(absvel) * mass #momentum P = sum(p_i) = sum(v_i)*m
+			self.consume += len(outside_box[0]) #number of particles that left box
 
 			self.m = max(self.m, self.R.max())
 
+			# After calculation, move particles
+			self.V[outside_box] *= -1 # Bounce off wall
 			self.R += self.V * self.dt #Updating position of particles. 
 			#No internal forces; acceleration in 0
+			# Basically Euler, but since no acceleration no energy is added
 
 	def test(self): #Some tests to validate simulation
 		if self.m > self.l * 1.1: 
@@ -64,7 +69,7 @@ class Engine():
 
 		#plot histogram of vx, vy ,vz and V
 		for x, y in enumerate(["x", "y", "z"]): 
-			hist = plt.hist(self.V[:,x], bins = "auto")
+			hist = plt.hist(self.V[:,x], bins = "auto", density = True)
 			plt.plot([0,0], [0,hist[0].max()])
 			plt.xlabel(f"velocity in {y} direction")
 			plt.ylabel(f"number of particles in bin")
@@ -80,11 +85,11 @@ class Engine():
 
 	def performance(self):
 		thrust = self.mom / 24 / self.time
-		print("Thrust [N/s]: ", thrust)
+		print("Thrust [N]: ", thrust)
 		consume = self.consume * mass / 24 / self.time
 		print("mass consumed [kg/s]: ", consume)
 		exhaustv = np.mean(self.avgV)
-		print("exhaust V [m/s]: ", consume)
+		print("exhaust V [m/s]: ", exhaustv)
 
 		dv = 12819
 		mf = 1100
@@ -96,20 +101,22 @@ class Engine():
 k_B = const.k_B #boltzmann constant
 mass = const.m_H2 #particle mass
 
-# Variables
-T = 4000 #temperature in K
-L = 1e-6 #lengt of box in m
-N = int(1e5) #number of praticles
+if __name__ == "__main__":
 
-Ne = 1 #numer of engineboxes
+	# Variables
+	T = 4000 #temperature in K
+	L = 1e-6 #lengt of box in m
+	N = int(1e5) #number of praticles
 
-dt = 1e-12
-ts = 1000
+	Ne = 1 #numer of engineboxes
 
-inp = lambda : [N, Ne, T, L, dt, ts]
+	dt = 1e-12
+	ts = 1000
 
-rocket = Engine(*inp())
-rocket.build()
-rocket.ignite()
-rocket.test()
-rocket.performance()
+	inp = lambda : [N, Ne, T, L, dt, ts]
+
+	rocket = Engine(*inp())
+	rocket.build()
+	rocket.ignite()
+	rocket.test()
+	rocket.performance()
