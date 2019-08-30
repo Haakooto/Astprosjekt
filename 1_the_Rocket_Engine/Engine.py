@@ -2,12 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys, os
 import ast2000tools.constants as const
+import distributions as dists
 
 np.random.seed(1444000)
 
 # Class for engine
 class Engine():
 	def __init__(self, N_part, N_engines, Temp, Length, dt, ts):
+		# Names should be self explanatory
 		self.N = N_part
 		self.Ne = N_engines
 		self.T = Temp
@@ -18,20 +20,20 @@ class Engine():
 		self.ts = ts
 		self.time = dt * ts
 
+		# To improve efficiency we use numpys normal distribution instead of own defined
+		# Maxwell Boltzman. These are the same for each component when sigma in normal is as given under
 		self.sigma = np.sqrt(k_B * Temp / mass)
-
-		self.consume = 0
-		self.mom = 0
-		self.avgV = np.zeros(self.ts - 1)
-
-		self.m = 0
 
 	def build(self):
 
 		self.R = np.random.uniform(0, self.L, (self.N, 3)) - self.l #Array containing position. 2dim, [particle][dimension]
-		self.V = np.random.normal(0, self.sigma, (self.N, 3)) #array containing velocity. Like R
+		self.V = np.random.normal(0, self.sigma, (self.N, 3)) #array containing velocities. Like R
 
-		#make variables for calcualated properties
+		self.consume = 0 # number of particles that left nozzle
+		self.mom = 0 # momentum of particles that left nozzle, (in z-direction)
+		self.avgV = np.zeros(self.ts - 1) # avg exhaust velocity
+
+		self.m = 0 #maximum particle distance from centre of box.
 
 	def ignite(self):
 
@@ -87,9 +89,6 @@ class Engine():
 		self.thrust = self.Ne * self.mom / 24 / self.time
 		self.consume = self.Ne * self.consume * mass / 24 / self.time
 		self.exhaustv = np.mean(self.avgV)
-
-		dv = 12819
-		mf = 1100
 		self.dm = drymass * np.exp(dv / self.exhaustv) - drymass
 
 
