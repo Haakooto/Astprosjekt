@@ -9,7 +9,7 @@ np.random.seed(1444000)
 class Engine():
 	def __init__(self, N_part, N_engines, Temp, Length, dt, ts):
 		self.N = N_part
-		self.Ne = Ne
+		self.Ne = N_engines
 		self.T = Temp
 		self.L = Length
 		self.l = Length / 2
@@ -83,18 +83,14 @@ class Engine():
 		plt.title("Histogram of velocities")
 		plt.show()
 
-	def performance(self):
-		thrust = self.mom / 24 / self.time
-		print("Thrust [N]: ", thrust)
-		consume = self.consume * mass / 24 / self.time
-		print("mass consumed [kg/s]: ", consume)
-		exhaustv = np.mean(self.avgV)
-		print("exhaust V [m/s]: ", exhaustv)
+	def performance(self, drymass, dv):
+		self.thrust = self.Ne * self.mom / 24 / self.time
+		self.consume = self.Ne * self.consume * mass / 24 / self.time
+		self.exhaustv = np.mean(self.avgV)
 
 		dv = 12819
 		mf = 1100
-		dm = mf * np.exp(dv / exhaustv) - mf
-		print(f"mass consumed to reach escape velocity: {dm}")
+		self.dm = drymass * np.exp(dv / self.exhaustv) - drymass
 
 
 # Setting constants
@@ -104,7 +100,7 @@ mass = const.m_H2 #particle mass
 if __name__ == "__main__":
 
 	# Variables
-	T = 4000 #temperature in K
+	T = 3000 #temperature in K
 	L = 1e-6 #lengt of box in m
 	N = int(1e5) #number of praticles
 
@@ -119,4 +115,8 @@ if __name__ == "__main__":
 	rocket.build()
 	rocket.ignite()
 	rocket.test()
-	rocket.performance()
+	rocket.performance(1100, 12819)
+	print("Thrust [N]: ", rocket.thrust)
+	print("mass consumed [kg/s]: ", rocket.consume)
+	print("exhaust V [m/s]: ", rocket.exhaustv)
+	print(f"mass consumed to reach escape velocity: {rocket.dm}")
