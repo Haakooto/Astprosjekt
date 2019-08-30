@@ -1,0 +1,1 @@
+Started on launch. Built framework, and tobias writes launch itself. Cleaned up in distributions a bit. Needs to write tests for maxwell boltzman functions, see if we want to use these in Engine, or just stick with np.random.normal. latter is prob better, more efficient.

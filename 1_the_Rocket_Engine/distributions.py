@@ -1,50 +1,62 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import ast2000tools.constants as const
+import sys
 
-N = 1E5
-m = 3.347E-27
+n = 1e4
+m = const.m_H2
 T = 3000
-k = 1.38E-23
+k = const.k_B
 sig_b = np.sqrt(k*T/m)
 
 
-def f1(mu, sig, x):
-	exp = -0.5 * (x - mu)**2 * sig**(-2)
-	return (np.sqrt(2 * np.pi) * sig)**(-1) * np.exp(exp)
+def gauss(x, sig, mu):
+	return (np.sqrt(2 * np.pi) * sig)**(-1) * np.exp(-0.5 * (x - mu)**2 * sig**(-2))
 
-def f2(m,T,x):
-	return (m/(2*np.pi*k*T))**(3/2)*np.exp(-m*x**2/(2*k*T))*4*np.pi*x**2
+def max_boz(V, T, m):
+	return (m/(2*np.pi*k*T))**(3/2)*np.exp(-m*V**2/(2*k*T))*4*np.pi*V**2
 
-def P(a, b, mu, sig,f):
-	n = 1E4+1
-	dx = (b-a)/n
-	x = np.linspace(a, b, n) + mu
-	y = f(mu, sig, x)
-	return x, y, np.trapz(y, dx = dx)
+def max_boz_x(v, T, m):
+	return np.sqrt(m/(2*np.pi*k*T))*np.exp(-0.5*m*v**2/(k*T))
 
-sig = 1
-def test_P():
-	s1 = P(-sig,sig,0,sig,f1)[-1]
-	s2 = P(-2*sig,2*sig,0,sig,f1)[-1]
-	s3 = P(-3*sig,3*sig,0,sig,f1)[-1]
-	assert abs(0.68-s1)<0.005
-	assert abs(0.95-s2)<0.005
-	assert abs(0.997-s3)<0.0005
-test_P()
-
-def MaxBoz(v, m = 2.0159 * 1.66e-27, T = 3000):
-	kB = 1.380649e-23
-	e = - 0.5 * m * v ** 2 * (kB * T) ** (-1)
-	p1 = m ** (3/2) * (2 * np.pi * kB * T) ** (-3/2)
-	p3 = 4 * np.pi * v ** 2
-	return p1 * np.exp(e) * p3
-
-def PMaxBoz(a, b):
-	n = 1E4+1
+def P_g(a, b, mu, sig):
 	dx = (b-a)/n
 	x = np.linspace(a, b, n)
-	y = MaxBoz(x)
-	return x, y
+	y = gauss(x, sig, mu)
+	return x, y, np.trapz(y, dx = dx)
+
+def P_mb(a, b, T=T, m=m):
+	assert b <= a, "a must be smaller than b and not the same"
+
+	if a == -b:
+		f = max_boz_x
+	elif a == 0:
+		f = max_boz
+
+	dx = (b-a)/n
+	x = np.linspace(a, b, n)
+	y = f(x, T, m)
+	return x, y, np.trapz(y, dx = dx)
+
+
+def test_P_g():
+	sig = 1
+	mu = 0
+	tol = 0.005
+
+	s1 = P_g(-sig, sig, mu, sig)
+	s2 = P_g(-2*sig, 2*sig, mu, sig)
+	s3 = P_g(-3*sig, 3*sig, mu, sig)
+
+	assert abs(0.68-s1[2]) < tol
+	assert abs(0.95-s2[2]) < tol
+	assert abs(0.997-s3[2]) < tol
+
+def test_P_mb():
+	pass
+
+def main():
+	test_P_g()
 
 """
 def FWHM(X, Y, sig):
@@ -64,6 +76,12 @@ def FWHM(X, Y, sig):
 	return a,s,d
 """
 
+#x, y, A = P_mb(-15000,15000)
+#print(A)
+#plt.plot(x,y)
+#plt.show()
+
+"""
 width = 2.5E4
 x, y, A = P(-width,width,0,sig_b,f1)
 plt.plot(x,y)
@@ -86,3 +104,6 @@ x, y = PMaxBoz(-10,10)
 plt.plot(x,y)
 plt.grid()
 plt.show()
+"""
+if __name__ == "__main__":
+	main()
