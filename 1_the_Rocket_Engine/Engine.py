@@ -15,6 +15,7 @@ class Engine():
 		self.T = Temp
 		self.L = Length
 		self.l = Length / 2
+		self.nozzle = 0.4
 
 		self.dt = dt
 		self.ts = ts
@@ -86,8 +87,8 @@ class Engine():
 		plt.show()
 
 	def performance(self, drymass, dv):
-		self.thrust = self.Ne * self.mom / 24 / self.time
-		self.consume = self.Ne * self.consume * mass / 24 / self.time
+		self.thrust = self.Ne * self.mom * self.nozzle / 6 / self.time
+		self.consume = self.Ne * self.consume * mass * self.nozzle / 6 / self.time
 		self.exhaustv = np.mean(self.avgV)
 		self.dm = drymass * np.exp(dv / self.exhaustv) - drymass
 
