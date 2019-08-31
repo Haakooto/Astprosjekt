@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import ast2000tools.constants as const
 import sys
 
-n = 1e4
+n = int(1e5)
 m = const.m_H2
 T = 3000
 k = const.k_B
@@ -25,13 +25,13 @@ def P_g(a, b, mu, sig):
 	y = gauss(x, sig, mu)
 	return x, y, np.trapz(y, dx = dx)
 
-def P_mb(a, b, T=T, m=m):
-	assert b <= a, "a must be smaller than b and not the same"
+def P_mb(a, b, F = True, T=T, m=m):
+	assert a < b, "a must be smaller than b and not the same"
 
-	if a == -b:
-		f = max_boz_x
-	elif a == 0:
+	if F:
 		f = max_boz
+	else:
+		f = max_boz_x
 
 	dx = (b-a)/n
 	x = np.linspace(a, b, n)
@@ -52,11 +52,23 @@ def test_P_g():
 	assert abs(0.95-s2[2]) < tol
 	assert abs(0.997-s3[2]) < tol
 
+	N = np.random.normal(0, 1, n)
+	N = plt.hist(N, density = True, bins = "auto", label = "hist of np.rd.normal")
+	S = P_g(-4, 4, mu, sig)
+	plt.plot(S[0], S[1], label = "our function")
+	plt.legend()
+	plt.show()
+
 def test_P_mb():
-	pass
+	N = np.random.normal(0, sig_b, n)
+	m = P_mb(-15000, 15000, False)
+	plt.hist(N, density = True, bins = "auto")
+	plt.plot(m[0], m[1])
+	plt.show()
 
 def main():
 	test_P_g()
+	test_P_mb()
 
 """
 def FWHM(X, Y, sig):

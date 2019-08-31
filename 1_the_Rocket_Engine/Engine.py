@@ -8,14 +8,14 @@ np.random.seed(1444000)
 
 # Class for engine
 class Engine():
-	def __init__(self, N_part, N_engines, Temp, Length, dt, ts):
+	def __init__(self, N_part, N_engines, nozzle_size, Temp, Length, dt, ts):
 		# Names should be self explanatory
 		self.N = N_part
 		self.Ne = N_engines
 		self.T = Temp
 		self.L = Length
 		self.l = Length / 2
-		self.nozzle = 0.4
+		self.nozzle = nozzle_size
 
 		self.dt = dt
 		self.ts = ts
@@ -72,18 +72,25 @@ class Engine():
 
 		#plot histogram of vx, vy ,vz and V
 		for x, y in enumerate(["x", "y", "z"]): 
-			hist = plt.hist(self.V[:,x], bins = "auto", density = True)
-			plt.plot([0,0], [0,hist[0].max()])
+			max_bolz = dists.P_mb(round(self.V[:,x].min()), round(self.V[:,x].max()), False, self.T, mass)
+			plt.plot(max_bolz[0], max_bolz[1], label = "analytical velocity distribution")
+			hist = plt.hist(self.V[:,x], bins = "auto", density = True, label = "system velocity distribution")
+
 			plt.xlabel(f"velocity in {y} direction")
 			plt.ylabel(f"number of particles in bin")
 			plt.title(f"Histogram of velocities in {y} direction")
+			plt.legend(loc = 1)
 			plt.show()
 		
 		V = np.linalg.norm(self.V, axis = 1)
-		plt.hist(V, bins = "auto")
+		plt.hist(V, bins = "auto", density = True, label = "system velocity distribution")
+		max_bolz = dists.P_mb(0, V.max(), True, self.T, mass)
+		plt.plot(max_bolz[0], max_bolz[1], label = "analytical velocity distribution")
+
 		plt.xlabel("velocity")
 		plt.ylabel("number of particles with velocity")
 		plt.title("Histogram of velocities")
+		plt.legend(loc = 1)
 		plt.show()
 
 	def performance(self, drymass, dv):
@@ -104,12 +111,13 @@ if __name__ == "__main__":
 	L = 1e-6 #lengt of box in m
 	N = int(1e5) #number of praticles
 
-	Ne = 1 #numer of engineboxes
+	Ne = 16 / L ** 2 #numer of engineboxes
+	nozzle_size = 0.4 #area of nozzle in L**2
 
 	dt = 1e-12
 	ts = 1000
 
-	inp = lambda : [N, Ne, T, L, dt, ts]
+	inp = lambda : [N, Ne, nozzle_size, T, L, dt, ts]
 
 	rocket = Engine(*inp())
 	rocket.build()
