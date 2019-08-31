@@ -4,7 +4,7 @@ import sys, os
 import ast2000tools.constants as const
 import distributions as dists
 
-np.random.seed(1444000)
+np.random.seed(14441111)
 
 # Class for engine
 class Engine():
@@ -43,7 +43,7 @@ class Engine():
 			outside_box = np.where(abs(self.R) > self.l)
 			#particles outside box, [particle][coord outside]
 
-			absvel = abs(self.V[outside_box]) 
+			absvel = abs(self.V[outside_box])
 			#abs to account for which side of box
 
 			if t != 0: #at t = 0 all are inside
@@ -58,12 +58,15 @@ class Engine():
 
 			# After calculation, move particles
 			self.V[outside_box] *= -1 # Bounce off wall
-			self.R += self.V * self.dt #Updating position of particles. 
+			self.R += self.V * self.dt #Updating position of particles.
 			#No internal forces; acceleration in 0
 			# Basically Euler, but since no acceleration no energy is added
 
+		self.thrust = self.mom * self.nozzle / 6 / self.time
+		self.consume = self.consume * mass * self.nozzle / 6 / self.time
+
 	def test(self): #Some tests to validate simulation
-		if self.m > self.l * 1.1: 
+		if self.m > self.l * 1.1:
 			#if timestep is too high, particles will go far outside
 			#This tests if particles always are relatively close to the box
 			print("Particles left the box, timestep is too high")
@@ -71,7 +74,7 @@ class Engine():
 			print("Timestep is good")
 
 		#plot histogram of vx, vy ,vz and V
-		for x, y in enumerate(["x", "y", "z"]): 
+		for x, y in enumerate(["x", "y", "z"]):
 			max_bolz = dists.P_mb(round(self.V[:,x].min()), round(self.V[:,x].max()), False, self.T, mass)
 			plt.plot(max_bolz[0], max_bolz[1], label = "analytical velocity distribution")
 			hist = plt.hist(self.V[:,x], bins = "auto", density = True, label = "system velocity distribution")
@@ -81,7 +84,7 @@ class Engine():
 			plt.title(f"Histogram of velocities in {y} direction")
 			plt.legend(loc = 1)
 			plt.show()
-		
+
 		V = np.linalg.norm(self.V, axis = 1)
 		plt.hist(V, bins = "auto", density = True, label = "system velocity distribution")
 		max_bolz = dists.P_mb(0, V.max(), True, self.T, mass)
@@ -94,8 +97,6 @@ class Engine():
 		plt.show()
 
 	def performance(self, drymass, dv):
-		self.thrust = self.Ne * self.mom * self.nozzle / 6 / self.time
-		self.consume = self.Ne * self.consume * mass * self.nozzle / 6 / self.time
 		self.exhaustv = np.mean(self.avgV)
 		self.dm = drymass * np.exp(dv / self.exhaustv) - drymass
 
