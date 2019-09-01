@@ -36,7 +36,7 @@ class Rocket():
 			self.time += self.dt
 
 			if self.escaped():
-				self.status = "Lauch successful"
+				self.status = "Launch successful"
 				break
 			elif self.fuel < 0:
 				self.status = "Burnout"
