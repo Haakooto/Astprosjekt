@@ -10,7 +10,7 @@ import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
-util.check_for_newer_version()
+#util.check_for_newer_version()
 
 np.random.seed(14441111)
 seed = util.get_seed("haakooto")
@@ -57,7 +57,7 @@ Ne = Ne 							# number of boxes
 fuel = fuel_load					# loaded fuel
 T1 = Volcano.time 					# launch duration
 planet_pos = system.initial_positions[:,0]
-pos_x = planet_pos[0] - R / const.AU# x-position relative to star3
+pos_x = planet_pos[0] + R / const.AU# x-position relative to star3
 pos_y = planet_pos[1]
 T0 = 0								# start of launch
 
@@ -66,5 +66,7 @@ verify = [thrust, dm, Ne, fuel, T1, (pos_x, pos_y), T0]
 mission.set_launch_parameters(*verify)
 mission.launch_rocket()
 
-final_position = (planet_pos[0] - Volcano.r / const.AU, pos_y)
-#mission.verify_launch_result(final_position)
+orb_speed = np.asarray([0,10.194/(86400*365.2422)]) #orbital speed in AU/s
+rot_speed = np.asarray([0,2*np.pi*R/(system.rotational_periods[0]*86400*const.AU)])
+final_position = np.asarray([planet_pos[0] + Volcano.r / const.AU, pos_y]) + orb_speed*T1 + rot_speed*T1
+mission.verify_launch_result(final_position)
