@@ -21,9 +21,9 @@ system = SolarSystem(seed)
 
 # Variables for engine
 N = int(1e5)	# number of particles
-nozzle = 0.5		# nozzle size, as percent of surface
+nozzle = 0.25		# nozzle size, as percent of surface
 L = 1e-7 		# lengt of box in m
-T = 10000 		# temperature in K
+T = 3000 		# temperature in K
 dt_e = 1e-12
 ts = 1000
 
@@ -33,9 +33,9 @@ R = system.radii[0] * 1000			# planet radius
 M = system.masses[0] * const.m_sun	# planet mass
 dt_r = 0.01
 
-rocket_area = mission.spacecraft_area
+rocket_area = mission.spacecraft_area / 14
 Ne = rocket_area / L ** 2 #numer of engineboxes
-fuel_load = 9000
+fuel_load = 40000
 
 # Packages to build rocket and engine
 engine_build = [N, nozzle, T, L, dt_e, ts]
@@ -66,5 +66,5 @@ verify = [thrust, dm, Ne, fuel, T1, (pos_x, pos_y), T0]
 mission.set_launch_parameters(*verify)
 mission.launch_rocket()
 
-final_position = (pos_x + R / const.AU - Volcano.r / const.AU, pos_y)
-mission.verify_launch_result(final_position)
+final_position = (planet_pos[0] - Volcano.r / const.AU, pos_y)
+#mission.verify_launch_result(final_position)
