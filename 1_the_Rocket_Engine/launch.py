@@ -36,8 +36,8 @@ ts = 1000
 
 inp = [N, Ne, nozzle, T, L, dt, ts]
 
-rocket = Engine(*inp)
-rocket.build()
+rocket = Engine()
+rocket.build(*inp)
 rocket.ignite()
 rocket.performance(mass, escape_v(r_p))
 

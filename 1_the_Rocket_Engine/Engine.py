@@ -8,10 +8,9 @@ np.random.seed(14441111)
 
 # Class for engine
 class Engine():
-	def __init__(self, N_part, N_engines, nozzle_size, Temp, Length, dt, ts):
+	def build(self, N_part, nozzle_size, Temp, Length, dt, ts):
 		# Names should be self explanatory
 		self.N = N_part
-		self.Ne = N_engines
 		self.T = Temp
 		self.L = Length
 		self.l = Length / 2
@@ -24,8 +23,6 @@ class Engine():
 		# To improve efficiency we use numpys normal distribution instead of own defined
 		# Maxwell Boltzman. These are the same for each component when sigma in normal is as given under
 		self.sigma = np.sqrt(k_B * Temp / mass)
-
-	def build(self):
 
 		self.R = np.random.uniform(0, self.L, (self.N, 3)) - self.l #Array containing position. 2dim, [particle][dimension]
 		self.V = np.random.normal(0, self.sigma, (self.N, 3)) #array containing velocities. Like R
@@ -112,15 +109,14 @@ if __name__ == "__main__":
 	L = 1e-6 #lengt of box in m
 	N = int(1e5) #number of praticles
 
-	Ne = 16 / L ** 2 #numer of engineboxes
 	nozzle_size = 0.4 #area of nozzle in L**2
 
 	dt = 1e-12
 	ts = 1000
 
-	inp = lambda : [N, Ne, nozzle_size, T, L, dt, ts]
+	inp = [N, nozzle_size, T, L, dt, ts]
 
-	rocket = Engine(*inp())
+	rocket = Engine(*inp)
 	rocket.build()
 	rocket.ignite()
 	rocket.test()
