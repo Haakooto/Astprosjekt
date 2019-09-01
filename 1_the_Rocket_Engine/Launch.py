@@ -21,7 +21,7 @@ system = SolarSystem(seed)
 
 # Variables for engine
 N = int(1e5)	# number of particles
-nozzle = 0.25		# nozzle size, as percent of surface
+nozzle = 0.25	# nozzle size, as percent of surface
 L = 1e-7 		# lengt of box in m
 T = 3000 		# temperature in K
 dt_e = 1e-12
@@ -33,8 +33,8 @@ R = system.radii[0] * 1000			# planet radius
 M = system.masses[0] * const.m_sun	# planet mass
 dt_r = 0.01
 
-rocket_area = mission.spacecraft_area / 14
-Ne = rocket_area / L ** 2 #numer of engineboxes
+rocket_area = mission.spacecraft_area
+Ne = rocket_area / L ** 2 / 14 #numer of engineboxes
 fuel_load = 40000
 
 # Packages to build rocket and engine
