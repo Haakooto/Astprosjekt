@@ -8,6 +8,16 @@ from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
 class SolarSystem(SolarSystem):
+	def plot_orb(self):
+		f = np.linspace(0,2*np.pi,1000)
+		for i in range(self.number_of_planets):
+			b = self.semi_major_axes[i]*np.sqrt(1-self.eccentricities[i]**2)
+			x = self.semi_major_axes[i]*np.cos(f)*np.cos(self.semi_major_axis_angles[i]-b*np.sin(f)*np.sin(self.semi_major_axis_angles[i]))
+			y = self.semi_major_axes[i]*np.cos(f)*np.sin(self.semi_major_axis_angles[i]+b*np.sin(f)*np.cos(self.semi_major_axis_angles[i]))
+			plt.plot(x,y)
+
+		plt.show()
+
 	def simulate(self, T, dt):
 		self.T = T
 		self.dt = dt
@@ -38,4 +48,6 @@ if __name__ == "__main__":
 	mission = SpaceMission(seed)
 	system = SolarSystem(seed)
 
-	system.simulate(1, 0.01)
+	system.plot_orb()
+	
+	#system.simulate(1, 0.01)
