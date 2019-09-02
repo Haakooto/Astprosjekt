@@ -43,16 +43,16 @@ rocket_build = [mass, R, M, dt_r]
 
 
 Volcano = Rocket(*rocket_build)
-Mercum = Engine()
+Epstein = Engine()
 
-Mercum.build(*engine_build)
-Volcano.assemble(Mercum, fuel_load, Ne)
+Epstein.build(*engine_build)
+Volcano.assemble(Epstein, fuel_load, Ne)
 
 Volcano.launch()
 
 
-thrust = Volcano.engine.thrust		# thrust pr box
-dm = Volcano.engine.consume			# mass loss rate
+thrust = Epstein.thrust			# thrust pr box
+dm = Epstein.consume				# mass loss rate
 Ne = Ne 							# number of boxes
 fuel = fuel_load					# loaded fuel
 T1 = Volcano.time 					# launch duration
