@@ -185,6 +185,4 @@ GitHub.sublime-settings
 *.xyz
 testfile.py
 *.dump
-*.png
 *.gif
-*.pdf
