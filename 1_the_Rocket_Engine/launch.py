@@ -57,7 +57,7 @@ Ne = Ne 							# number of boxes
 fuel = fuel_load					# loaded fuel
 T1 = Volcano.time 					# launch duration
 planet_pos = system.initial_positions[:,0]
-pos_x = planet_pos[0] + R / const.AU# x-position relative to star3
+pos_x = planet_pos[0] + R / const.AU# x-position relative to star
 pos_y = planet_pos[1]
 T0 = 0								# start of launch
 
