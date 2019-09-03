@@ -66,7 +66,7 @@ verify = [thrust, dm, Ne, fuel, T1, (pos_x, pos_y), T0]
 mission.set_launch_parameters(*verify)
 mission.launch_rocket()
 
-orb_speed = np.asarray([0,10.194/(86400*365.2422)]) #orbital speed in AU/s
-rot_speed = np.asarray([0,2*np.pi*R/(system.rotational_periods[0]*86400*const.AU)])
+orb_speed = system.initial_velocities[:,0] / const.yr
+rot_speed = 2 * np.pi * R / (system.rotational_periods[0] * const.day * const.AU)
 final_position = np.asarray([planet_pos[0] + Volcano.r / const.AU, pos_y]) + orb_speed*T1 + rot_speed*T1
 mission.verify_launch_result(final_position)
