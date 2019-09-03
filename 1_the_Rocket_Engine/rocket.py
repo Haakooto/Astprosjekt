@@ -36,13 +36,13 @@ class Rocket():
 			self.time += self.dt
 
 			if self.escaped():
-				self.status = "Launch successful"
+				self.status = ("Launch successful", 0)
 				break
 			elif self.fuel < 0:
-				self.status = "Burnout"
+				self.status = ("Burnout", 1)
 				break
 			elif self.r < self.R:
-				self.status = "RUD in LAO"
+				self.status = ("RUD in LAO", 1)
 				break
 
 		self.statusrapport()
@@ -56,10 +56,14 @@ class Rocket():
 		return self.thrust / (self.mass + self.fuel) - const.G * self.M / self.r ** 2
 
 	def statusrapport(self):
-		print(self.status, "\n")
+		print(self.status[0], "\n")
 		print(f"Altitude: {self.r - self.R}")
 		print(f"Speed: {self.v}")
 		print(f"fuel left: {self.fuel}")
 		print(f"Time: {self.time}\n")
+
+		if self.status[1] == 1:
+			sys.exit()
+
 
 
