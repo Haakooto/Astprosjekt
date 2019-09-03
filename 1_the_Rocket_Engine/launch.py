@@ -37,6 +37,9 @@ rocket_area = mission.spacecraft_area
 Ne = rocket_area / L ** 2 / 14 #numer of engineboxes
 fuel_load = 40000
 
+# haakooto: throttle = 14, fuel = 40000
+# tobiasob: throttle = 4, fuel = 136000
+
 # Packages to build rocket and engine
 engine_build = [N, nozzle, T, L, dt_e, ts]
 rocket_build = [mass, R, M, dt_r]
