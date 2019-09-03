@@ -9,15 +9,19 @@ from ast2000tools.solar_system import SolarSystem
 
 class SolarSystem(SolarSystem):
 	def plot_orb(self):
-		f = np.linspace(0,2*np.pi,1000)
-		a = self.semi_major_axes
-		e = self.eccentricities
-		omega = self.semi_major_axis_angles
-		for i in range(self.number_of_planets):
-			b = a[i]*np.sqrt(1-e[i]**2)
-			x = a[i]*np.cos(f)*np.cos(omega[i])-b*np.sin(f)*np.sin(omega[i])
-			y = a[i]*np.cos(f)*np.sin(omega[i])+b*np.sin(f)*np.cos(omega[i])
-			plt.plot(x,y)
+		p = 1000
+		N = self.number_of_planets
+
+		f = np.transpose(np.array([np.linspace(0,2*np.pi,p)]*N))
+		a = np.array([self.semi_major_axes]*p)
+		e = np.array([self.eccentricities]*p)
+		omega = np.array([self.semi_major_axis_angles]*p)
+
+		b = a*np.sqrt(1-e**2)
+		x = a*np.cos(f)*np.cos(omega)-b*np.sin(f)*np.sin(omega)
+		y = a*np.cos(f)*np.sin(omega)+b*np.sin(f)*np.cos(omega)
+
+		plt.plot(x,y)
 
 		plt.axis("equal")
 		plt.show()
@@ -57,14 +61,14 @@ if __name__ == "__main__":
 	mission = SpaceMission(seed)
 	system = SolarSystem(seed)
 
-	#system.plot_orb()
-	system.simulate(5, 0.00001)
-	x = np.zeros(system.nt)
-	y = np.zeros(system.nt)
-	for i in range(system.number_of_planets):
-		for j in range(system.nt):
-			x[j] = system.pos[j][0][i]
-			y[j] = system.pos[j][1][i]
-		plt.plot(x,y)
-		plt.axis("equal")
-	plt.show()
+	system.plot_orb()
+	# system.simulate(5, 0.00001)
+	# x = np.zeros(system.nt)
+	# y = np.zeros(system.nt)
+	# for i in range(system.number_of_planets):
+	# 	for j in range(system.nt):
+	# 		x[j] = system.pos[j][0][i]
+	# 		y[j] = system.pos[j][1][i]
+	# 	plt.plot(x,y)
+	# 	plt.axis("equal")
+	# plt.show()
