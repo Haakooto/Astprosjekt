@@ -28,13 +28,6 @@ class SolarSystem(SolarSystem):
 		plt.axis("equal")
 		#plt.show()
 
-	def old_accelerate(self, r, m):
-		#x = -m*r[0]/(r[0]**2+r[1]**2)**(3/2)
-		#y = -m*r[1]/(r[0]**2+r[1]**2)**(3/2)
-		X = -m*r/(np.linalg.norm(r, axis = 0))**3
-		return X
-		#return np.asarray([x,y])
-
 	def accelerate(self, r):
 		return self.m * r * (np.linalg.norm(r, axis = 0)) ** (-3)
 
@@ -45,24 +38,6 @@ class SolarSystem(SolarSystem):
 
 		self.time = np.linspace(0, T, self.nt)
 
-		"""
-		self.pos = np.zeros((self.nt, 2, self.number_of_planets))
-		self.vel = np.zeros_like(self.pos)
-		self.acc = np.zeros_like(self.pos)
-
-		self.pos[0] = self.initial_positions
-		self.vel[0] = self.initial_velocities
-		G = 4*np.pi**2
-		m = np.array([G*(self.star_mass+self.masses)]*2)
-		self.acc[0] = self.accelerate(self.initial_positions,m)
-
-
-		for t in range(int(T / dt)):
-			self.pos[t + 1] = self.pos[t] + self.vel[t] * self.dt + 0.5 * self.acc[t] * self.dt ** 2
-			self.acc[t + 1] = self.accelerate(self.pos[t+1] ,m)
-			self.vel[t + 1] = self.vel[t] + 0.5 * (self.acc[t] + self.acc[t+1]) * self.dt
-
-		"""
 		self.pos = np.zeros((2, self.number_of_planets, self.nt))
 		self.pos[:, :, 0] = self.initial_positions
 
