@@ -21,17 +21,22 @@ class SolarSystem(SolarSystem):
 		x = a*np.cos(f)*np.cos(omega)-b*np.sin(f)*np.sin(omega)
 		y = a*np.cos(f)*np.sin(omega)+b*np.sin(f)*np.cos(omega)
 
+		P = self.initial_positions
+		plt.scatter(P[0], P[1])
 		plt.plot(x,y)
 
 		plt.axis("equal")
-		plt.show()
+		#plt.show()
+
+	def old_accelerate(self, r, m):
+		#x = -m*r[0]/(r[0]**2+r[1]**2)**(3/2)
+		#y = -m*r[1]/(r[0]**2+r[1]**2)**(3/2)
+		X = -m*r/(np.linalg.norm(r, axis = 0))**3
+		return X
+		#return np.asarray([x,y])
 
 	def accelerate(self, r):
-		G = 4*np.pi**2
-		m = G*(self.star_mass+self.masses)
-		x = -m*r[0]/(r[0]**2+r[1]**2)**(3/2)
-		y = -m*r[1]/(r[0]**2+r[1]**2)**(3/2)
-		return np.asarray([x,y])
+		return self.m * r * (np.linalg.norm(r, axis = 0)) ** (-3)
 
 	def simulate(self, T, dt):
 		self.T = T
@@ -40,19 +45,43 @@ class SolarSystem(SolarSystem):
 
 		self.time = np.linspace(0, T, self.nt)
 
+		"""
 		self.pos = np.zeros((self.nt, 2, self.number_of_planets))
 		self.vel = np.zeros_like(self.pos)
 		self.acc = np.zeros_like(self.pos)
 
 		self.pos[0] = self.initial_positions
 		self.vel[0] = self.initial_velocities
-		self.acc[0] = self.accelerate(self.initial_positions)
+		G = 4*np.pi**2
+		m = np.array([G*(self.star_mass+self.masses)]*2)
+		self.acc[0] = self.accelerate(self.initial_positions,m)
+
 
 		for t in range(int(T / dt)):
 			self.pos[t + 1] = self.pos[t] + self.vel[t] * self.dt + 0.5 * self.acc[t] * self.dt ** 2
-			self.acc[t + 1] = self.accelerate(self.pos[t+1])
+			self.acc[t + 1] = self.accelerate(self.pos[t+1] ,m)
 			self.vel[t + 1] = self.vel[t] + 0.5 * (self.acc[t] + self.acc[t+1]) * self.dt
 
+		"""
+		self.pos = np.zeros((2, self.number_of_planets, self.nt))
+		self.pos[:, :, 0] = self.initial_positions
+
+		self.m =const.G_sol * (self.masses + self.star_mass)
+
+		self.vel = self.initial_velocities
+
+
+		self.acc_0 = self.accelerate(self.initial_positions)
+
+		for t in range(self.nt - 1):
+			self.pos[:, :, t + 1] = self.pos[:, :, t] \
+									+ self.vel * self.dt \
+									+ 0.5 * self.acc_0 * self.dt ** 2
+
+			self.acc_1 = self.accelerate(self.pos[:, :, t + 1])
+			self.vel = self.vel + 0.5 * (self.acc_0 + self.acc_1) * self.dt
+
+			self.acc_0 = self.acc_1
 
 
 if __name__ == "__main__":
@@ -62,13 +91,17 @@ if __name__ == "__main__":
 	system = SolarSystem(seed)
 
 	system.plot_orb()
-	# system.simulate(5, 0.00001)
-	# x = np.zeros(system.nt)
-	# y = np.zeros(system.nt)
-	# for i in range(system.number_of_planets):
-	# 	for j in range(system.nt):
-	# 		x[j] = system.pos[j][0][i]
-	# 		y[j] = system.pos[j][1][i]
-	# 	plt.plot(x,y)
-	# 	plt.axis("equal")
-	# plt.show()
+	year = 0.093
+	dt = year/1000
+	system.simulate(40*year, dt)
+
+	print("start plotting")
+	X = system.pos
+	plt.plot(X[0,3,:], X[1,3,:])
+	#plt.scatter(X[0,:,0], X[1,:,0])
+	plt.grid()
+	plt.show()
+
+	# print(X[:,:,0] == system.initial_positions)
+
+	system.verify_planet_positions(40*year, system.pos)
