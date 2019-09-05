@@ -10,7 +10,7 @@ from ast2000tools.solar_system import SolarSystem
 
 class SolarSystem(SolarSystem):
     def plot_orb(self):
-        p = 10
+        p = 1000
         N = self.number_of_planets
 
         f = np.transpose(np.array([np.linspace(0, 2 * np.pi, p)] * N))
@@ -18,68 +18,11 @@ class SolarSystem(SolarSystem):
         e = np.array([self.eccentricities] * p)
         omega = np.array([self.semi_major_axis_angles] * p)
 
-        b = a * np.sqrt(1 - e ** 2)
-        x = a * np.cos(f) * np.cos(omega) - b * np.sin(f) * np.sin(omega)
-        y = a * np.cos(f) * np.sin(omega) + b * np.sin(f) * np.cos(omega)
-        #plt.plot(x, y) #
-
-        expr = a * (1 - e ** 2) / (1 + e * np.cos(f + omega))
-        print(expr)
-        x = expr * np.cos(f)
-        y = expr * np.sin(f)
-        #plt.plot(x, y)
-
-
-
-    def plot_plan3(self):
-        p = 1000
-        N = self.number_of_planets
-
-        f = np.array([np.linspace(0, 2 * np.pi, p)] * N)
-        a = np.transpose([self.semi_major_axes] * p)
-        e = np.transpose([self.eccentricities] * p)
-        omega = np.transpose([self.semi_major_axis_angles] * p)
-
-        # print(a.shape, f.shape, e.shape, omega.shape)
-
-        R = a * (1 - e ** 2) * (1 + e * np.cos(f - omega + np.pi)) ** -1
+        R = a * (1 - e ** 2) / (1 + e * np.cos(f - omega + np.pi))
         x = R * np.cos(f)
         y = R * np.sin(f)
 
-        print(x.max(), x.min())
-        print(y.max(), y.min())
-
-        plt.plot(np.transpose(x), np.transpose(y))
-
-        # p = 10
-        # N = 2
-        # print(np.transpose([self.semi_major_axes]*p))
-        # f = np.transpose(np.array([np.linspace(0, 2 * np.pi, p)] * N))
-        # f = np.array([np.linspace(0, 2* np.pi, p)]*N)
-        # a = np.array([self.semi_major_axes[3:5]] * p)
-        # e = np.array([self.eccentricities[3]] * p)
-        # omega = np.array([self.semi_major_axis_angles[3]] * p)
-        # print(f)
-        # print(a)
-        # print(e)
-        # print(omega)
-
-        # f = np.linspace(0, 2 * np.pi, p)
-        # print(f)
-
-        # b = a * np.sqrt(1 - e ** 2)
-        # x = a * np.cos(f) * np.cos(omega) - b * np.sin(f) * np.sin(omega)
-        # y = a * np.cos(f) * np.sin(omega) + b * np.sin(f) * np.cos(omega)
-        # #plt.plot(x, y)
-
-        # expr = a * (1 - e ** 2) / (1 + e * np.cos(f + omega))
-        # x = expr * np.cos(f)
-        # y = expr * np.sin(f)
-        # print(expr)
-        # print(x)
-        # print(y)
-        # plt.plot(x, y)
-
+        plt.plot(x, y)
 
 
     def diff_orb(self):
@@ -154,8 +97,7 @@ if __name__ == "__main__":
 
     # system.diff_orb()
 
-    system.plot_plan3()
-    # system.plot_orb()
+    system.plot_orb()
     year_conv = system.rotational_periods[0]
     years = 20
     dt = year_conv / 1e5
@@ -163,7 +105,7 @@ if __name__ == "__main__":
     # system.simulate(years * year_conv, dt)
     system.load_pos("backup_20yr.npy")
 
-    # print("start plotting")
+    print("start plotting")
     X = system.pos
     for i in range(system.number_of_planets):
         plt.plot(X[0, i, :], X[1, i, :])
