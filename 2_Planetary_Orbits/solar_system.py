@@ -45,10 +45,10 @@ class SolarSystem(SolarSystem):
 
         R = a * (1 - e ** 2) / (1 + e * np.cos(u - omega))
 
-        X = R * np.cos(u)
-        Y = R * np.sin(u)
+        self.X = R * np.cos(u)
+        self.Y = R * np.sin(u)
 
-        plt.plot(X, Y)
+        plt.plot(self.X, self.Y)
 
 
     def accelerate(self, r):
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         plt.plot(X[0, i, :], X[1, i, :])
     plt.scatter(*system.initial_positions)
     plt.scatter(X[0, :, -1], X[1, :, -1])
-
+    plt.scatter(system.X[-1], system.Y[-1])
     plt.axis("equal")
     plt.grid()
     plt.show()
