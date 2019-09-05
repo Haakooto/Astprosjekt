@@ -61,7 +61,10 @@ class Engine():
 
 		self.thrust = self.mom * self.nozzle / 6 / self.time
 		self.consume = self.consume * mass * self.nozzle / 6 / self.time
-
+		self.pressure = self.N * k_B * self.T * self.L ** (-3) # pressure in bar
+		print(self.pressure * self.nozzle * self.L ** 2 / 6)
+		print(self.pressure * 1e-5)
+		print(self.thrust)
 	def test(self): #Some tests to validate simulation
 		if self.m > self.l * 1.1:
 			#if timestep is too high, particles will go far outside
