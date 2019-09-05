@@ -16,20 +16,20 @@ class SolarSystem(SolarSystem):
         f = np.transpose(np.array([np.linspace(0, 2 * np.pi, p)] * N))
         a = np.array([self.semi_major_axes] * p)
         e = np.array([self.eccentricities] * p)
-        omega = np.array([self.semi_major_axis_angles] * p)
+        omega = np.array([self.semi_major_axis_angles] * p) + np.pi
 
-        R = a * (1 - e ** 2) / (1 + e * np.cos(f - omega + np.pi))
+        R = a * (1 - e ** 2) / (1 + e * np.cos(f - omega))
         x = R * np.cos(f)
         y = R * np.sin(f)
 
         plt.plot(x, y)
 
-
     def diff_orb(self):
         from ivp import ExponentialDecay as ED
 
         e = self.eccentricities
-        a = self.semi_major_axis_angles
+        a = self.semi_major_axes
+        omega = self.semi_major_axis_angles + np.pi
         r = self.initial_positions
         v = self.initial_velocities
         h = r[0] * v[1] - r[1] * v[0]
@@ -38,21 +38,18 @@ class SolarSystem(SolarSystem):
         start_angle = np.where(self.initial_positions[0] >= 0, start_angle, start_angle + np.pi)
 
         T = 2
-        dt = 0.00001
+        dt = 1e-6
 
-        orbits = ED(a, e, h, self.semi_major_axis_angles)
+        orbits = ED(a, e, h, omega)
         t, u = orbits.solve(start_angle, T, dt)
 
-        R = a * (1 - e ** 2) / (1 + e * np.cos(u - self.semi_major_axis_angles))
+        R = a * (1 - e ** 2) / (1 + e * np.cos(u - omega))
 
         X = R * np.cos(u)
         Y = R * np.sin(u)
 
         plt.plot(X, Y)
-        plt.show()
-        from IPython import embed
 
-        embed()
 
     def accelerate(self, r):
         return self.m * r * (np.linalg.norm(r, axis=0)) ** (-3)
@@ -95,7 +92,7 @@ if __name__ == "__main__":
     mission = SpaceMission(seed)
     system = SolarSystem(seed)
 
-    # system.diff_orb()
+    system.diff_orb()
 
     system.plot_orb()
     year_conv = system.rotational_periods[0]
@@ -105,7 +102,6 @@ if __name__ == "__main__":
     # system.simulate(years * year_conv, dt)
     system.load_pos("backup_20yr.npy")
 
-    print("start plotting")
     X = system.pos
     for i in range(system.number_of_planets):
         plt.plot(X[0, i, :], X[1, i, :])
