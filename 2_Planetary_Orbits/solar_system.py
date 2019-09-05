@@ -21,7 +21,7 @@ class SolarSystem(SolarSystem):
         b = a * np.sqrt(1 - e ** 2)
         x = a * np.cos(f) * np.cos(omega) - b * np.sin(f) * np.sin(omega)
         y = a * np.cos(f) * np.sin(omega) + b * np.sin(f) * np.cos(omega)
-        #plt.plot(x, y)
+        #plt.plot(x, y) #
 
         expr = a * (1 - e ** 2) / (1 + e * np.cos(f + omega))
         print(expr)
