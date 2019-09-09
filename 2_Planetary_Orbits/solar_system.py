@@ -83,24 +83,29 @@ class SolarSystem(SolarSystem):
 	def accelerate(self, r):
 		return self.constant * r * (np.linalg.norm(r, axis=0)) ** (-3)
 
-	def plot_orbits(self):
-		for i in range(self.number_of_planets):
-			plt.plot(*self.i_pos[:, i, :], "b")
-			plt.plot(*self.d_pos[:, i, :], "g")
-		plt.plot(*self.a_pos, "r")
-
-		plt.scatter(*self.i_pos[:,:,0])
-		plt.scatter(*self.d_pos[:,:,0])
-
-		plt.scatter(*self.i_pos[:,:,-1])
-		plt.scatter(*self.d_pos[:,:,-1])
+	def plot_orbits(self, a=True, i=True, d=True):
+		ordered_planets = [7, 1, 2, 3, 5, 6, 4]
+		for p in range(self.number_of_planets):
+			lab = f"planet {ordered_planets[p]}"
+			if i:
+				plt.plot(*self.i_pos[:, p, :], "b", label=lab)
+			if d:
+				plt.plot(*self.d_pos[:, p, :], "g", label=lab)
+		if a:
+			plt.plot(*self.a_pos, "r")
+		plt.scatter(*self.initial_positions, label="init")
+		if i:
+			plt.scatter(*self.i_pos[:,:,-1], label="final i")
+		if d:
+			plt.scatter(*self.d_pos[:,:,-1], label="final d")
 
 		plt.grid()
 		plt.axis("equal")
+		plt.legend(loc=1)
 		plt.show()
 
 	def load_pos(self, filename):
-		self.pos = np.load(filename)
+		self.i_pos = np.load(filename)
 
 
 if __name__ == "__main__":
@@ -111,39 +116,19 @@ if __name__ == "__main__":
 	mission = SpaceMission(seed)
 	system = SolarSystem(seed)
 
+	one_year = 1.8556 / 20
+	years = 20
+	dt = one_year / 1e5
+
 	system.analytical_orbits()
-	year_conv = system.rotational_periods[0]
-	years = 2
-	dt = year_conv / 1e5
+	system.differential_orbits(years * one_year, dt)
+	# system.iterated_orbits(years * one_year, dt)
+	system.load_pos("i_pos_20yr.npy")
 
-	# print(f"time to iterated orbits: {time.time()-timer}")
-	system.iterated_orbits(years * year_conv, dt)
-	# print(f"time to differential orbits: {time.time()-timer}")
-	system.differential_orbits(years * year_conv, dt)
-	# print(f"time to print: {time.time() - timer}")
-	# system.load_pos("backup_20yr.npy")
 	system.plot_orbits()
-	# print(system.a_pos.shape)
-	# print(system.i_pos.shape)
-	# print(system.d_pos.shape)
-	# print(system.i_pos)
-	# print(system.d_pos)
-	# X = system.pos
-	# for i in range(system.number_of_planets):
-	#     plt.plot(X[0, i, :], X[1, i, :])
-	# plt.plot(system.X, system.Y)
 
-	# plt.scatter(*system.initial_positions)
-	# plt.scatter(system.X[0], system.Y[0])
 
-	# plt.scatter(X[0, :, -1], X[1, :, -1])
-	# plt.scatter(system.X[-1], system.Y[-1])
+	# np.save("i_pos_20yr", system.i_pos)
 
-	# plt.axis("equal")
-	# plt.grid()
-	# plt.show()
-
-	# np.save("planets_pos_20yr", system.pos)
-
-	system.verify_planet_positions(years * year_conv, system.i_pos)
-	system.verify_planet_positions(years * year_conv, system.d_pos)
+	system.verify_planet_positions(years * one_year, system.i_pos)
+	system.verify_planet_positions(years * one_year, system.d_pos)
