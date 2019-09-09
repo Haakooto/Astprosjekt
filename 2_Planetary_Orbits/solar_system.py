@@ -25,7 +25,7 @@ class SolarSystem(SolarSystem):
 		x = R * np.cos(f)
 		y = R * np.sin(f)
 
-		self.a_pos = np.vstack((x, y))
+		self.a_pos = np.array([x, y])
 
 	def differential_orbits(self, T, dt):
 		from ivp import ExponentialDecay as ED
@@ -49,8 +49,8 @@ class SolarSystem(SolarSystem):
 
 		x = R * np.cos(u)
 		y = R * np.sin(u)
-		print(x.shape)
-		self.d_pos = np.concatenate((x, y), axis = 0)
+
+		self.d_pos = np.transpose([x, y], (0, 2, 1))
 
 	def iterated_orbits(self, T, dt):
 		self.T = T
@@ -84,9 +84,16 @@ class SolarSystem(SolarSystem):
 		return self.constant * r * (np.linalg.norm(r, axis=0)) ** (-3)
 
 	def plot_orbits(self):
-		plt.plot(*self.a_pos)
-		plt.plot(*self.i_pos)
-		plt.plot(*self.d_pos)
+		for i in range(self.number_of_planets):
+			plt.plot(*self.i_pos[:, i, :], "b")
+			plt.plot(*self.d_pos[:, i, :], "g")
+		plt.plot(*self.a_pos, "r")
+
+		plt.scatter(*self.i_pos[:,:,0])
+		plt.scatter(*self.d_pos[:,:,0])
+
+		plt.scatter(*self.i_pos[:,:,-1])
+		plt.scatter(*self.d_pos[:,:,-1])
 
 		plt.grid()
 		plt.axis("equal")
@@ -106,22 +113,21 @@ if __name__ == "__main__":
 
 	system.analytical_orbits()
 	year_conv = system.rotational_periods[0]
-	years = 1
+	years = 2
 	dt = year_conv / 1e5
-	dt = 0.0001
 
-	print(f"time to iterated orbits: {time.time()-timer}")
+	# print(f"time to iterated orbits: {time.time()-timer}")
 	system.iterated_orbits(years * year_conv, dt)
-	print(f"time to differential orbits: {time.time()-timer}")
+	# print(f"time to differential orbits: {time.time()-timer}")
 	system.differential_orbits(years * year_conv, dt)
-	print(f"time to print: {time.time() - timer}")
+	# print(f"time to print: {time.time() - timer}")
 	# system.load_pos("backup_20yr.npy")
-
-	print(system.a_pos.shape)
-	print(system.i_pos.shape)
-	print(system.d_pos.shape)
-	print(system.i_pos)
-	print(system.d_pos)
+	system.plot_orbits()
+	# print(system.a_pos.shape)
+	# print(system.i_pos.shape)
+	# print(system.d_pos.shape)
+	# print(system.i_pos)
+	# print(system.d_pos)
 	# X = system.pos
 	# for i in range(system.number_of_planets):
 	#     plt.plot(X[0, i, :], X[1, i, :])
@@ -139,4 +145,5 @@ if __name__ == "__main__":
 
 	# np.save("planets_pos_20yr", system.pos)
 
-	# system.verify_planet_positions(years * year_conv, system.pos)
+	system.verify_planet_positions(years * year_conv, system.i_pos)
+	system.verify_planet_positions(years * year_conv, system.d_pos)
