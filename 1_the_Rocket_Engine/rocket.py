@@ -2,16 +2,17 @@ import ast2000tools.constants as const
 import numpy as np
 import sys, os
 
-class Rocket():
-	def __init__(self, m0, r0, M, dt, sT = 0):
-		self.mass = m0  # rocket drymass
-		self.r = r0 	# rocket position
-		self.R = r0 	# planet radius
-		self.M = M 		# planet mass
-		self.dt = dt 	# timestep
 
-		self.v = 0		# initial velocity
-		self.time = sT	# start time
+class Rocket:
+	def __init__(self, m0, r0, M, dt, sT=0):
+		self.mass = m0  # rocket drymass
+		self.r = r0  # rocket position
+		self.R = r0  # planet radius
+		self.M = M  # planet mass
+		self.dt = dt  # timestep
+
+		self.v = 0  # initial velocity
+		self.time = sT  # start time
 
 	def assemble(self, engine, fuel_mass, N_engines):
 		self.engine = engine
@@ -20,6 +21,7 @@ class Rocket():
 
 	def launch(self):
 
+		self.launch_sequence()
 		self.engine.ignite()
 
 		self.thrust = self.engine.thrust * self.Ne
@@ -27,6 +29,7 @@ class Rocket():
 
 		while True:
 
+			# leapfrog integration
 			a0 = self.acceleration()
 			self.r += self.v * self.dt + 0.5 * a0 * self.dt ** 2
 			a1 = self.acceleration()
@@ -35,14 +38,16 @@ class Rocket():
 			self.fuel -= self.burn_rate * self.dt
 			self.time += self.dt
 
+			# 3 possible outcomes of launch:
 			if self.escaped():
 				self.status = ("Launch successful", 0)
 				break
 			elif self.fuel < 0:
 				self.status = ("Burnout", 1)
 				break
-			elif self.r < self.R:
+			elif self.r < self.R:  # if underground
 				self.status = ("RUD in LAO", 1)
+				# Rapid Unschedules Disassembly in Low Atmospheric Orbit
 				break
 
 		self.statusrapport()
@@ -65,5 +70,5 @@ class Rocket():
 		if self.status[1] == 1:
 			sys.exit()
 
-
-
+	def launch_sequence(self):
+		pass
