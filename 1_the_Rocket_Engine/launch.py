@@ -1,3 +1,9 @@
+"""
+Program for å gjennomføre rakettoppskytning
+
+All kode er egenskrevet
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import sys, os
@@ -52,8 +58,7 @@ Epstein = Engine()
 Epstein.build(*engine_build)
 Volcano.assemble(Epstein, fuel_load, Ne)
 
-def main():
-	Volcano.launch()
+Volcano.launch()
 
 
 def verify():
@@ -84,5 +89,4 @@ def verify():
 
 
 if __name__ == "__main__":
-	main()
 	verify()

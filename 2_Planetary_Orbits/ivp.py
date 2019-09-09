@@ -1,9 +1,17 @@
+"""
+Program for å løse differensiallikning d theta / d t
+
+bruker scipi.integrate.solve_ivp
+
+All kode er egenskrevet
+"""
+
 import scipy.integrate as si
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-class ExponentialDecay:
+class Diff_eq:
 	def __init__(self, sma, ecc, spin, ang):
 
 		self.a = sma
@@ -36,7 +44,7 @@ if __name__ == "__main__":
 	T = 1
 	dt = 0.000001
 
-	decay_model = ExponentialDecay(a, e, h, ang)
+	decay_model = Diff_eq(a, e, h, ang)
 	t, u = decay_model.solve(u0, T, dt)
 	print(u[0])
 

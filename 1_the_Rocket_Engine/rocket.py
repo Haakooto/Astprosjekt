@@ -1,3 +1,9 @@
+"""
+Program for å simmulere rakettoppskytning
+
+All kode er egenskrevet
+"""
+
 import ast2000tools.constants as const
 import numpy as np
 import sys, os

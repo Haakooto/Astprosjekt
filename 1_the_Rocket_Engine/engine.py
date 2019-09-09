@@ -1,3 +1,9 @@
+"""
+Program for å simmulere rakettmotor
+
+All kode er egenskrevet
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import sys, os

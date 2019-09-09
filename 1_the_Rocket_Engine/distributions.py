@@ -1,3 +1,9 @@
+"""
+Program for sannsynlighetsmodeller
+
+All kode er egenskrevet
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import ast2000tools.constants as const

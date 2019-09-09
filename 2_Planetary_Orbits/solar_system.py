@@ -1,3 +1,11 @@
+"""
+Program for å finne planetposisjoner numerisk
+
+All kode er egenskrevet
+
+fil ivp.py er nødvendig for en av metodene
+"""
+
 import numpy as np
 import sys, os
 import matplotlib.pyplot as plt
@@ -6,8 +14,6 @@ import ast2000tools.utils as util
 import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
-
-import time
 
 util.check_for_newer_version()
 
@@ -28,7 +34,7 @@ class SolarSystem(SolarSystem):
 		self.a_pos = np.array([x, y])
 
 	def differential_orbits(self, T, dt):
-		from ivp import ExponentialDecay as ED
+		from ivp import Diff_eq as Deq
 
 		e = self.eccentricities
 		a = self.semi_major_axes
@@ -42,7 +48,7 @@ class SolarSystem(SolarSystem):
 			self.initial_positions[0] >= 0, start_angle, start_angle + np.pi
 		)
 
-		orbits = ED(a, e, h, omega)
+		orbits = Deq(a, e, h, omega)
 		t, u = orbits.solve(start_angle, T, dt)
 
 		R = a * (1 - e ** 2) / (1 + e * np.cos(u - omega))
@@ -109,7 +115,6 @@ class SolarSystem(SolarSystem):
 
 
 if __name__ == "__main__":
-	timer = time.time()
 
 	seed = util.get_seed("haakooto")
 
