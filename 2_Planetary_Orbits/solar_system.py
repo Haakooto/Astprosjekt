@@ -7,111 +7,136 @@ import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
+import time
+
+util.check_for_newer_version()
 
 class SolarSystem(SolarSystem):
-    def plot_orb(self):
-        p = 1000
-        N = self.number_of_planets
+	def analytical_orbits(self):
+		p = 10000
+		N = self.number_of_planets
 
-        f = np.transpose(np.array([np.linspace(0, 2 * np.pi, p)] * N))
-        a = np.array([self.semi_major_axes] * p)
-        e = np.array([self.eccentricities] * p)
-        omega = np.array([self.semi_major_axis_angles] * p) + np.pi
+		f = np.transpose(np.array([np.linspace(0, 2 * np.pi, p)] * N))
+		a = np.array([self.semi_major_axes] * p)
+		e = np.array([self.eccentricities] * p)
+		omega = np.array([self.aphelion_angles] * p) + np.pi
 
-        R = a * (1 - e ** 2) / (1 + e * np.cos(f - omega))
-        x = R * np.cos(f)
-        y = R * np.sin(f)
+		R = a * (1 - e ** 2) / (1 + e * np.cos(f - omega))
+		x = R * np.cos(f)
+		y = R * np.sin(f)
 
-        plt.plot(x, y)
+		self.a_pos = np.vstack((x, y))
 
-    def diff_orb(self):
-        from ivp import ExponentialDecay as ED
+	def differential_orbits(self, T, dt):
+		from ivp import ExponentialDecay as ED
 
-        e = self.eccentricities
-        a = self.semi_major_axes
-        omega = self.semi_major_axis_angles + np.pi
-        r = self.initial_positions
-        v = self.initial_velocities
-        h = r[0] * v[1] - r[1] * v[0]
+		e = self.eccentricities
+		a = self.semi_major_axes
+		omega = self.aphelion_angles + np.pi
+		r = self.initial_positions
+		v = self.initial_velocities
+		h = r[0] * v[1] - r[1] * v[0]
 
-        start_angle = np.arctan(self.initial_positions[1] / self.initial_positions[0])
-        start_angle = np.where(self.initial_positions[0] >= 0, start_angle, start_angle + np.pi)
+		start_angle = np.arctan(self.initial_positions[1] / self.initial_positions[0])
+		start_angle = np.where(
+			self.initial_positions[0] >= 0, start_angle, start_angle + np.pi
+		)
 
-        T = 2
-        dt = 1e-6
+		orbits = ED(a, e, h, omega)
+		t, u = orbits.solve(start_angle, T, dt)
 
-        orbits = ED(a, e, h, omega)
-        t, u = orbits.solve(start_angle, T, dt)
+		R = a * (1 - e ** 2) / (1 + e * np.cos(u - omega))
 
-        R = a * (1 - e ** 2) / (1 + e * np.cos(u - omega))
+		x = R * np.cos(u)
+		y = R * np.sin(u)
+		print(x.shape)
+		self.d_pos = np.concatenate((x, y), axis = 0)
 
-        self.X = R * np.cos(u)
-        self.Y = R * np.sin(u)
+	def iterated_orbits(self, T, dt):
+		self.T = T
+		dt = dt
+		nt = int(T / dt)
 
-        plt.plot(self.X, self.Y)
+		self.time = np.linspace(0, T, nt)
 
+		pos = np.zeros((2, self.number_of_planets, nt))
+		pos[:, :, 0] = self.initial_positions
 
-    def accelerate(self, r):
-        return self.m * r * (np.linalg.norm(r, axis=0)) ** (-3)
+		self.constant = -const.G_sol * self.star_mass
 
-    def simulate(self, T, dt):
-        self.T = T
-        self.dt = dt
-        self.nt = int(T / dt)
+		vel = self.initial_velocities
 
-        self.time = np.linspace(0, T, self.nt)
+		acc_0 = self.accelerate(pos[:, :, 0])
 
-        self.pos = np.zeros((2, self.number_of_planets, self.nt))
-        self.pos[:, :, 0] = self.initial_positions
+		for t in range(nt - 1):
+			pos[:, :, t + 1] = (
+				pos[:, :, t] + vel * dt + 0.5 * acc_0 * dt ** 2
+			)
 
-        self.m = -const.G_sol * self.star_mass
+			acc_1 = self.accelerate(pos[:, :, t + 1])
+			vel = vel + 0.5 * (acc_0 + acc_1) * dt
 
-        self.vel = self.initial_velocities
+			acc_0 = acc_1
 
-        self.acc_0 = self.accelerate(self.pos[:, :, 0])
+		self.i_pos = pos
 
-        for t in range(self.nt - 1):
-            self.pos[:, :, t + 1] = (
-                self.pos[:, :, t]
-                + self.vel * self.dt
-                + 0.5 * self.acc_0 * self.dt ** 2
-            )
+	def accelerate(self, r):
+		return self.constant * r * (np.linalg.norm(r, axis=0)) ** (-3)
 
-            self.acc_1 = self.accelerate(self.pos[:, :, t + 1])
-            self.vel = self.vel + 0.5 * (self.acc_0 + self.acc_1) * self.dt
+	def plot_orbits(self):
+		plt.plot(*self.a_pos)
+		plt.plot(*self.i_pos)
+		plt.plot(*self.d_pos)
 
-            self.acc_0 = self.acc_1
+		plt.grid()
+		plt.axis("equal")
+		plt.show()
 
-    def load_pos(self, filename):
-        self.pos = np.load(filename)
+	def load_pos(self, filename):
+		self.pos = np.load(filename)
 
 
 if __name__ == "__main__":
-    seed = util.get_seed("haakooto")
+	timer = time.time()
 
-    mission = SpaceMission(seed)
-    system = SolarSystem(seed)
+	seed = util.get_seed("haakooto")
 
-    system.diff_orb()
+	mission = SpaceMission(seed)
+	system = SolarSystem(seed)
 
-    system.plot_orb()
-    year_conv = system.rotational_periods[0]
-    years = 20
-    dt = year_conv / 1e5
+	system.analytical_orbits()
+	year_conv = system.rotational_periods[0]
+	years = 1
+	dt = year_conv / 1e5
+	dt = 0.0001
 
-    # system.simulate(years * year_conv, dt)
-    system.load_pos("backup_20yr.npy")
+	print(f"time to iterated orbits: {time.time()-timer}")
+	system.iterated_orbits(years * year_conv, dt)
+	print(f"time to differential orbits: {time.time()-timer}")
+	system.differential_orbits(years * year_conv, dt)
+	print(f"time to print: {time.time() - timer}")
+	# system.load_pos("backup_20yr.npy")
 
-    X = system.pos
-    for i in range(system.number_of_planets):
-        plt.plot(X[0, i, :], X[1, i, :])
-    plt.scatter(*system.initial_positions)
-    plt.scatter(X[0, :, -1], X[1, :, -1])
-    plt.scatter(system.X[-1], system.Y[-1])
-    plt.axis("equal")
-    plt.grid()
-    plt.show()
+	print(system.a_pos.shape)
+	print(system.i_pos.shape)
+	print(system.d_pos.shape)
+	print(system.i_pos)
+	print(system.d_pos)
+	# X = system.pos
+	# for i in range(system.number_of_planets):
+	#     plt.plot(X[0, i, :], X[1, i, :])
+	# plt.plot(system.X, system.Y)
 
-    #np.save("planets_pos_20yr", system.pos)
+	# plt.scatter(*system.initial_positions)
+	# plt.scatter(system.X[0], system.Y[0])
 
-    #system.verify_planet_positions(years * year_conv, system.pos)
+	# plt.scatter(X[0, :, -1], X[1, :, -1])
+	# plt.scatter(system.X[-1], system.Y[-1])
+
+	# plt.axis("equal")
+	# plt.grid()
+	# plt.show()
+
+	# np.save("planets_pos_20yr", system.pos)
+
+	# system.verify_planet_positions(years * year_conv, system.pos)

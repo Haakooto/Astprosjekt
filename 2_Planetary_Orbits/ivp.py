@@ -4,55 +4,51 @@ import matplotlib.pyplot as plt
 
 
 class ExponentialDecay:
-    def __init__(self, sma, ecc, spin, ang):
+	def __init__(self, sma, ecc, spin, ang):
 
-        self.a = sma
-        self.e = ecc
-        self.h = spin
-        self.ang = ang
+		self.a = sma
+		self.e = ecc
+		self.h = spin
+		self.ang = ang
 
-    def __call__(self, u):
-        return (1 + self.e * np.cos(u - self.ang)) ** 2 * self.h * (self.a * (1 - self.e ** 2)) ** (-2)
+	def __call__(self, t, u):
+		return (
+			(1 + self.e * np.cos(u - self.ang)) ** 2
+			* self.h
+			* (self.a * (1 - self.e ** 2)) ** (-2)
+		)
 
+	def solve(self, u0, T, dt):
+		n = int(T / dt)
+		t = np.linspace(0, T, n)
 
-    def solve(self, u0, T, dt):
-        n = int(T / dt) + 1
-        t = np.linspace(0, T, n)
-
-
-        U = np.zeros((n, len(u0)))
-        U[0] = u0
-
-        for i in range(n - 1):
-            U[i + 1] = U[i] + self(U[i]) * dt
-
-        return t, U
-
+		solved = si.solve_ivp(self, (0, T), u0, t_eval=t, method="RK45")
+		return solved.t, np.transpose(solved.y)
 
 
 if __name__ == "__main__":
-    a = 0.0151386
-    e = 0.0057
-    h = 1.5520257
-    ang = 0
+	a = 0.0151386
+	e = 0.0057
+	h = 1.5520257
+	ang = 0
 
-    u0 = [0]
-    T = 1
-    dt = 0.000001
+	u0 = [0]
+	T = 1
+	dt = 0.000001
 
-    decay_model = ExponentialDecay(a, e, h, ang)
-    t, u = decay_model.solve(u0, T, dt)
-    print(u[0])
+	decay_model = ExponentialDecay(a, e, h, ang)
+	t, u = decay_model.solve(u0, T, dt)
+	print(u[0])
 
-    r = a*(1-e**2)/(1+e*np.cos(u - ang))
+	r = a * (1 - e ** 2) / (1 + e * np.cos(u - ang))
 
-    x = r * np.cos(u)
-    y = r * np.sin(u)
+	x = r * np.cos(u)
+	y = r * np.sin(u)
 
-    plt.plot(x, y)
+	plt.plot(x, y)
 
-    plt.axis("equal")
-    plt.xlabel("t")
-    plt.ylabel("y")
-    plt.grid()
-    plt.show()
+	plt.axis("equal")
+	plt.xlabel("t")
+	plt.ylabel("y")
+	plt.grid()
+	plt.show()
