@@ -22,7 +22,7 @@ class ExponentialDecay:
 		n = int(T / dt)
 		t = np.linspace(0, T, n)
 
-		solved = si.solve_ivp(self, (0, T), u0, t_eval=t, method="RK45")
+		solved = si.solve_ivp(self, (0, T), u0, t_eval=t, method="Radau")
 		return solved.t, np.transpose(solved.y)
 
 
