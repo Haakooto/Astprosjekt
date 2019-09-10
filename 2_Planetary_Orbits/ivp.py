@@ -1,12 +1,9 @@
 """
 Program for å løse differensiallikning d theta / d t
 
-bruker scipi.integrate.solve_ivp
-
 All kode er egenskrevet
 """
 
-import scipy.integrate as si
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -30,8 +27,13 @@ class Diff_eq:
 		n = int(T / dt)
 		t = np.linspace(0, T, n)
 
-		solved = si.solve_ivp(self, (0, T), u0, t_eval=t, method="Radau")
-		return solved.t, np.transpose(solved.y)
+		u = np.zeros((7, n))
+		u[:,0] = u0
+
+		for i in range(n - 1):
+			u[:,i + 1] = u[:,i] + self(0, u[:,i]) * dt
+
+		return t, np.transpose(u)
 
 
 if __name__ == "__main__":
