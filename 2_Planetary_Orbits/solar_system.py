@@ -15,9 +15,11 @@ import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
+
 util.check_for_newer_version()
 
-class SolarSystem(SolarSystem):
+class SolarSys(SolarSystem):
+
 	def analytical_orbits(self):
 		p = 10000
 		N = self.number_of_planets
@@ -59,6 +61,7 @@ class SolarSystem(SolarSystem):
 		self.d_pos = np.transpose([x, y], (0, 2, 1))
 
 	def iterated_orbits(self, T, dt):
+
 		self.T = T
 		dt = dt
 		nt = int(T / dt)
@@ -91,8 +94,9 @@ class SolarSystem(SolarSystem):
 
 	def plot_orbits(self, a=True, i=True, d=True):
 		ordered_planets = [7, 1, 2, 3, 5, 6, 4]
+		planet_names = ["Vulcan", "Laconia", "Vogsphere", "Ilus", "Alderaan", "Tellusia", "Auberon"]
 		for p in range(self.number_of_planets):
-			lab = f"planet {ordered_planets[p]}"
+			lab = f"{planet_names[p]}; nr. {ordered_planets[p]}"
 			if i:
 				plt.plot(*self.i_pos[:, p, :], "b", label=lab)
 			if d:
@@ -115,23 +119,22 @@ class SolarSystem(SolarSystem):
 
 
 if __name__ == "__main__":
-
 	seed = util.get_seed("haakooto")
 
 	mission = SpaceMission(seed)
-	system = SolarSystem(seed)
+	system = SolarSys(seed)
 
 	one_year = 1.8556 / 20
 	years = 20
-	dt = one_year / 1e5
+	dt = one_year / 1e4
 
 	system.analytical_orbits()
+	system.iterated_orbits(years * one_year, dt)
+	# system.load_pos("i_pos_20yr.npy")
+
 	system.differential_orbits(years * one_year, dt)
-	# system.iterated_orbits(years * one_year, dt)
-	system.load_pos("i_pos_20yr.npy")
 
 	system.plot_orbits()
-
 
 	# np.save("i_pos_20yr", system.i_pos)
 
