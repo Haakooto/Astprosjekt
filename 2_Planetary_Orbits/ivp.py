@@ -27,7 +27,7 @@ class Diff_eq:
 		n = int(T / dt)
 		t = np.linspace(0, T, n)
 
-		u = np.zeros((7, n))
+		u = np.zeros((len(u0), n))
 		u[:,0] = u0
 
 		for i in range(n - 1):
