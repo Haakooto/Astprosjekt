@@ -189,3 +189,4 @@ testfile.py
 *.png
 *.svg
 *.npy
+*.xml
