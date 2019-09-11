@@ -39,11 +39,15 @@ class SolarSys(SolarSystem):
 
 		self.a_pos = np.array([x, y])
 
-	def differential_orbits(self, yrs, dt_pr_yr, r0=None):
+	def differential_orbits(self, yrs, dt_pr_yr, newpos=False):
 		from ivp import Diff_eq as Deq
 
 
-		if type(r0) == "NoneType":
+		# if type(r0) == "NoneType":
+			# r0 = self.initial_positions
+		if newpos:
+			r0 = self.r0
+		else:
 			r0 = self.initial_positions
 
 		T = self.one_year * yrs
@@ -99,7 +103,7 @@ class SolarSys(SolarSystem):
 	def accelerate(self, r):
 		return self.constant * r * (np.linalg.norm(r, axis=0)) ** (-3)
 
-	def plot_orbits(self, a=False, i=False, d=False, p=False):
+	def plot_orbits(self, a=False, i=False, d=False, o=False):
 
 		ordered_planets = np.argsort(np.linalg.norm(self.initial_positions, axis = 0))
 		planet_names = ["Vulcan", "Laconia", "Vogsphere", "Ilus", "Alderaan",
@@ -111,8 +115,8 @@ class SolarSys(SolarSystem):
 				plt.plot(*self.i_pos[:, p, :], "b", label=f"{lab}, i")
 			if d:
 				plt.plot(*self.d_pos[:, p, :], "g", label=f"{lab}, d")
-			if p:
-				plt.plot(*self.pos[:, p, :], "c", label=f"{lab}, d")
+			if o:
+				plt.plot(*self.pos[:, p, :], "c", label=f"{lab}, p")
 		if a:
 			plt.plot(*self.a_pos, "y", label="analytical")
 		plt.scatter(*self.initial_positions, label="init")
@@ -120,7 +124,7 @@ class SolarSys(SolarSystem):
 			plt.scatter(*self.i_pos[:,:,-1], label="final i")
 		if d:
 			plt.scatter(*self.d_pos[:,:,-1], label="final d")
-		if p:
+		if o:
 			plt.scatter(*self.pos[:,:,-1], label="final pos")
 		plt.scatter([0], [0], s=80, c=np.array(self.star_color)/255)
 
@@ -142,11 +146,11 @@ class SolarSys(SolarSystem):
 		for n in range(N):
 			if n != 0:
 				prev_pos = np.load(filename)
-				r0 = prev_pos[:, :, -1]
+				self.r0 = prev_pos[:, :, -1]
 			else:
-				r0 = self.initial_positions
+				self.r0 = self.initial_positions
 
-			self.differential_orbits(batch_size, dt_pr_yr, r0)
+			self.differential_orbits(batch_size, dt_pr_yr, True)
 
 			if n != 0:
 				pos = np.concatenate((prev_pos, self.d_pos), axis = 2)
@@ -156,31 +160,34 @@ class SolarSys(SolarSystem):
 			np.save(filename, pos)
 			self.pos = pos
 
-		print(self.pos.shape)
 
 
 if __name__ == "__main__":
 	seed = util.get_seed("haakooto")
 
-	mission = SpaceMission(seed)
+	# mission = SpaceMission(seed)
 	system = SolarSys(seed)
 
 	years = 100
 	dt = 1e-5
 
-	system.long_run(years, dt, 50)
+	# system.long_run(years, dt)
 
 	# system.analytical_orbits()
 	# system.iterated_orbits(years, dt)
 	# system.load_pos(f"pos_{years}yr.npy")
 
-	# system.d_pos = np.load(f"pos_{years}yr.npy")
+	# system.pos = np.load("pos_100yr.npy")
+	# system.pos = system.pos[:,:,::2]
+
+	system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
+	# system.t = np.linspace(0, years * system.one_year, len(system.d_pos[0][0]))
 
 	# system.differential_orbits(years, dt)
 
-	system.plot_orbits(p=True)
+	system.plot_orbits(d=True)
 
 	# np.save(f"pos_{years}yr", system.d_pos)
 
-	# system.verify_planet_positions(years * one_year, system.i_pos)
-	# system.verify_planet_positions(years * system.one_year, system.pos)
+	# system.verify_planet_positions(years * system.one_year, system.d_pos)
+	# system.generate_orbit_video(system.t, system.d_pos)
