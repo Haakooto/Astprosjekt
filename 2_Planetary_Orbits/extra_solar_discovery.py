@@ -14,8 +14,6 @@ import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
-from orbits import SolarSys
-
 class SolarSys(SolarSystem):
 	def __init__(self, seed, data_path=None, has_moons=True, verbose=True):
 		SolarSystem.__init__(self, seed, data_path=None, has_moons=True, verbose=True)
@@ -58,18 +56,20 @@ class SolarSys(SolarSystem):
 			V = V + 0.5 * (a0 + a1) * dt
 
 
-		self.Rcm = R
+		self.solar_orb = R[:, 0]
+		self.planet_orb = R[:, 1]
 
 	def plot_two_pos(self):
-		R = self.Rcm
+		S = np.transpose(self.solar_orb)
+		P = np.transpose(self.planet_orb)
 
-		plt.plot(R[:, 0, 0], R[:, 0, 1], color=np.array(self.star_color)/255, label="Sun")
-		plt.plot(R[:, 1, 0], R[:, 1, 1], "c", label="Planet")
+		plt.plot(*S, color=np.array(self.star_color)/255, label="Sun")
+		plt.plot(*P,  "c", label="Planet")
 		plt.scatter([0], [0], label="Centre of mass")
 
 		plt.grid()
 		plt.axis("equal")
-		plt.legend()
+		plt.legend(loc=1)
 		plt.show()
 
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
 	system = SolarSys(seed)
 
-	yrs = 100
+	yrs = 10
 	dt = 1e-4
 
 	system.two_body_system(yrs, dt)
