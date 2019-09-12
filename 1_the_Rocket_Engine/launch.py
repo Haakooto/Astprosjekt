@@ -16,7 +16,7 @@ import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
-util.check_for_newer_version()
+#util.check_for_newer_version()
 
 np.random.seed(14441111)
 seed = util.get_seed("haakooto")
@@ -78,15 +78,14 @@ def verify():
 	mission.launch_rocket()
 
 	orb_speed = system.initial_velocities[:, 0] / const.yr
-	rot_speed = 2 * np.pi * R / (system.rotational_periods[0] * const.day * const.AU)
+	rot_speed = np.asarray([0,2 * np.pi * R / (system.rotational_periods[0] * const.day * const.AU)])
 	final_position = (
-		np.asarray([planet_pos[0] + Volcano.r / const.AU, pos_y])
+		np.asarray([planet_pos[0] + Volcano.r / const.AU, 0])
 		+ orb_speed * T1
 		+ rot_speed * T1
 	)
 
 	mission.verify_launch_result(final_position)
-
 
 if __name__ == "__main__":
 	verify()
