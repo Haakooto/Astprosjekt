@@ -15,7 +15,7 @@ import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
-# util.check_for_newer_version()
+util.check_for_newer_version()
 
 class SolarSys(SolarSystem):
 	def __init__(self, seed, data_path=None, has_moons=True, verbose=True):
@@ -43,8 +43,6 @@ class SolarSys(SolarSystem):
 		from ivp import Diff_eq as Deq
 
 
-		# if type(r0) == "NoneType":
-			# r0 = self.initial_positions
 		if newpos:
 			r0 = self.r0
 		else:
@@ -168,26 +166,26 @@ if __name__ == "__main__":
 	# mission = SpaceMission(seed)
 	system = SolarSys(seed)
 
-	years = 100
-	dt = 1e-5
+	years = 20
+	dt = 1e-4
 
 	# system.long_run(years, dt)
 
-	# system.analytical_orbits()
+	system.analytical_orbits()
 	# system.iterated_orbits(years, dt)
 	# system.load_pos(f"pos_{years}yr.npy")
 
 	# system.pos = np.load("pos_100yr.npy")
 	# system.pos = system.pos[:,:,::2]
 
-	system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
+	# system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
 	# system.t = np.linspace(0, years * system.one_year, len(system.d_pos[0][0]))
 
-	# system.differential_orbits(years, dt)
+	system.differential_orbits(years, dt)
 
-	system.plot_orbits(d=True)
+	system.plot_orbits(d=True, a=True)
 
 	# np.save(f"pos_{years}yr", system.d_pos)
 
-	# system.verify_planet_positions(years * system.one_year, system.d_pos)
+	system.verify_planet_positions(years * system.one_year, system.d_pos)
 	# system.generate_orbit_video(system.t, system.d_pos)
