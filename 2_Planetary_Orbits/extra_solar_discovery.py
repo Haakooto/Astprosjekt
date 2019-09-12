@@ -29,8 +29,8 @@ class SolarSys(SolarSystem):
 
 		def A(r):
 			R = r[0] - r[1]
-			F = - const.G_sol * self.star_mass * p_mass * np.linalg.norm(R) ** -3
-			return np.array([-F * r[0], F * r[1]])
+			F = const.G_sol * R * np.linalg.norm(R) ** -3
+			return np.array([-F * p_mass, F * self.star_mass])
 
 		T = self.one_year * yrs
 		dt = self.one_year * dt_pr_yr
@@ -50,26 +50,22 @@ class SolarSys(SolarSystem):
 		V[0] = -Vcm #
 		V[1] = self.initial_velocities[:, la_idx] - Vcm # setting planet vel
 
-		A0 = A(R[0])
-		print(A0)
-
 		for t in range(n - 1):
-			R[t + 1] = R[t] + V * dt + 0.5 * A0 * dt ** 2
-			A1 = A(R[t + 1])
-			V = V + 0.5 * (A0 + A1) * dt
-			A0 = A1
 
-		self.two_pos = R
+			a0 = A(R[t])
+			R[t + 1] = R[t] + V * dt + 0.5 * a0 * dt ** 2
+			a1 = A(R[t + 1])
+			V = V + 0.5 * (a0 + a1) * dt
+
+
+		self.Rcm = R
 
 	def plot_two_pos(self):
-		R = self.two_pos
-		# for p, l in zip([0, 1], [("Sun", np.array(self.star_color)/255), ("Planet", "g")]):
-			# plt.plot(*self.two_pos[:, p, :], l[1], label=l[0])
+		R = self.Rcm
+
 		plt.plot(R[:, 0, 0], R[:, 0, 1], color=np.array(self.star_color)/255, label="Sun")
 		plt.plot(R[:, 1, 0], R[:, 1, 1], "c", label="Planet")
 		plt.scatter([0], [0], label="Centre of mass")
-
-		plt.scatter(*self.initial_positions[:, self.find_largest_attractor()], label="init planet")
 
 		plt.grid()
 		plt.axis("equal")
@@ -78,13 +74,12 @@ class SolarSys(SolarSystem):
 
 
 
-
 if __name__ == "__main__":
 	seed = util.get_seed("haakooto")
 
 	system = SolarSys(seed)
 
-	yrs = 10
+	yrs = 100
 	dt = 1e-4
 
 	system.two_body_system(yrs, dt)
