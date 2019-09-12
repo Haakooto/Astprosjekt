@@ -71,6 +71,9 @@ class SolarSys(SolarSystem):
 
 	def iterated_orbits(self, yrs, dt_pr_yr):
 
+		def accelerate(r):
+			return self.constant * r * (np.linalg.norm(r, axis=0)) ** (-3)
+
 		T = self.one_year * yrs
 		dt = self.one_year * dt_pr_yr
 		nt = int(T / dt)
@@ -84,22 +87,20 @@ class SolarSys(SolarSystem):
 
 		vel = self.initial_velocities
 
-		acc_0 = self.accelerate(pos[:, :, 0])
+		acc_0 = accelerate(pos[:, :, 0])
 
 		for t in range(nt - 1):
 			pos[:, :, t + 1] = (
 				pos[:, :, t] + vel * dt + 0.5 * acc_0 * dt ** 2
 			)
 
-			acc_1 = self.accelerate(pos[:, :, t + 1])
+			acc_1 = accelerate(pos[:, :, t + 1])
 			vel = vel + 0.5 * (acc_0 + acc_1) * dt
 
 			acc_0 = acc_1
 
 		self.i_pos = pos
 
-	def accelerate(self, r):
-		return self.constant * r * (np.linalg.norm(r, axis=0)) ** (-3)
 
 	def plot_orbits(self, a=False, i=False, d=False, o=False):
 
@@ -166,7 +167,7 @@ if __name__ == "__main__":
 	# mission = SpaceMission(seed)
 	system = SolarSys(seed)
 
-	years = 20
+	years = 100
 	dt = 1e-4
 
 	# system.long_run(years, dt)
@@ -178,14 +179,14 @@ if __name__ == "__main__":
 	# system.pos = np.load("pos_100yr.npy")
 	# system.pos = system.pos[:,:,::2]
 
-	# system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
+	system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
 	# system.t = np.linspace(0, years * system.one_year, len(system.d_pos[0][0]))
 
-	system.differential_orbits(years, dt)
+	# system.differential_orbits(years, dt)
 
-	system.plot_orbits(d=True, a=True)
+	system.plot_orbits(a=True, d=True)
 
 	# np.save(f"pos_{years}yr", system.d_pos)
 
-	system.verify_planet_positions(years * system.one_year, system.d_pos)
+	# system.verify_planet_positions(years * system.one_year, system.d_pos)
 	# system.generate_orbit_video(system.t, system.d_pos)
