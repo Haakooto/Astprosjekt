@@ -16,7 +16,7 @@ import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
-#util.check_for_newer_version()
+# util.check_for_newer_version()
 
 np.random.seed(14441111)
 seed = util.get_seed("haakooto")
@@ -29,7 +29,7 @@ system = SolarSystem(seed)
 N = int(1e5)  # number of particles
 nozzle = 0.25  # nozzle size, as percent of surface
 L = 1e-7  # lengt of box in m
-T = 3000  # temperature in K
+T = 2800  # temperature in K
 dt_e = 1e-12
 ts = 1000
 
@@ -39,12 +39,12 @@ R = system.radii[0] * 1000  # planet radius in m
 M = system.masses[0] * const.m_sun  # planet mass in kg
 dt_r = 0.01
 
-throttle = 14  # how much to trottle engine, must be larger than 1
+throttle = 1 / 12  # how much to trottle engine, must be larger than 1
 rocket_area = mission.spacecraft_area
-Ne = rocket_area / L ** 2 / throttle  # numer of engineboxes
-fuel_load = 40000
+Ne = rocket_area / L ** 2 * throttle  # numer of engineboxes
+fuel_load = 50000
 
-# haakooto: throttle = 14, fuel = 40000
+# haakooto: throttle = 12, fuel = 50000
 # tobiasob: throttle = 4, fuel = 136000
 
 # Packages to build rocket and engine
@@ -78,14 +78,18 @@ def verify():
 	mission.launch_rocket()
 
 	orb_speed = system.initial_velocities[:, 0] / const.yr
-	rot_speed = np.asarray([0,2 * np.pi * R / (system.rotational_periods[0] * const.day * const.AU)])
+	rot_speed = np.asarray(
+		[0, 2 * np.pi * R / (system.rotational_periods[0] * const.day * const.AU)]
+	)
 	final_position = (
 		np.asarray([planet_pos[0] + Volcano.r / const.AU, 0])
 		+ orb_speed * T1
 		+ rot_speed * T1
 	)
+	print(final_position)
 
 	mission.verify_launch_result(final_position)
+
 
 if __name__ == "__main__":
 	verify()
