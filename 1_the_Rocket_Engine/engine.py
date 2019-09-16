@@ -89,11 +89,13 @@ class Engine:
 				density=True,
 				label="system velocity distribution",
 			)
+			print(sum(hist[0]) * (hist[1][-1] - hist[1][-2]))
+			print(sum(hist[0][np.where(abs(hist[1]) <= self.sigma)]) / sum(hist[0]))
 
 			plt.xlabel(f"velocity in {y} direction")
 			plt.ylabel(f"number of particles in bin")
 			plt.title(f"Histogram of velocities in {y} direction")
-			plt.legend(loc=1)
+			plt.legend(loc=5)
 			plt.show()
 
 		V = np.linalg.norm(self.V, axis=1)
@@ -130,10 +132,10 @@ if __name__ == "__main__":
 
 	inp = [N, nozzle_size, T, L, dt, ts]
 
-	rocket = Engine(*inp)
-	rocket.build()
+	rocket = Engine()
+	rocket.build(*inp)
 	rocket.ignite()
-	rocket.test_performace()
+	rocket.test_performance()
 	rocket.performance(1100, 12819)
 	print("Thrust [N]: ", rocket.thrust)
 	print("mass consumed [kg/s]: ", rocket.consume)
