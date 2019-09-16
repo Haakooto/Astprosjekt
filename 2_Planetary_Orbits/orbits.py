@@ -21,8 +21,10 @@ class SolarSys(SolarSystem):
 	def __init__(self, seed, data_path=None, has_moons=True, verbose=True):
 		SolarSystem.__init__(self, seed, data_path=None, has_moons=True, verbose=True)
 		self.one_year = np.sqrt(self.semi_major_axes[0] ** 3 / self.star_mass)
-		self.spin = self.initial_positions[0] * self.initial_velocities[1] \
+		self.spin = (
+			self.initial_positions[0] * self.initial_velocities[1]
 			- self.initial_positions[1] * self.initial_velocities[0]
+		)
 
 	def analytical_orbits(self):
 		p = 10000
@@ -41,7 +43,6 @@ class SolarSys(SolarSystem):
 
 	def differential_orbits(self, yrs, dt_pr_yr, newpos=False):
 		from ivp import Diff_eq as Deq
-
 
 		if newpos:
 			r0 = self.r0
@@ -70,7 +71,6 @@ class SolarSys(SolarSystem):
 		self.d_pos = np.transpose([x, y], (0, 2, 1))
 
 	def iterated_orbits(self, yrs, dt_pr_yr):
-
 		def accelerate(r):
 			return self.constant * r * (np.linalg.norm(r, axis=0)) ** (-3)
 
@@ -90,9 +90,7 @@ class SolarSys(SolarSystem):
 		acc_0 = accelerate(pos[:, :, 0])
 
 		for t in range(nt - 1):
-			pos[:, :, t + 1] = (
-				pos[:, :, t] + vel * dt + 0.5 * acc_0 * dt ** 2
-			)
+			pos[:, :, t + 1] = pos[:, :, t] + vel * dt + 0.5 * acc_0 * dt ** 2
 
 			acc_1 = accelerate(pos[:, :, t + 1])
 			vel = vel + 0.5 * (acc_0 + acc_1) * dt
@@ -101,12 +99,21 @@ class SolarSys(SolarSystem):
 
 		self.i_pos = pos
 
-
 	def plot_orbits(self, a=False, i=False, d=False, o=False):
 
-		ordered_planets = np.argsort(np.linalg.norm(self.initial_positions, axis = 0))
-		planet_names = ["Vulcan", "Laconia", "Vogsphere", "Ilus", "Alderaan",
-					"Apetos", "Auberon", "Zarkon", "Tellusia", "X"]
+		ordered_planets = np.argsort(np.linalg.norm(self.initial_positions, axis=0))
+		planet_names = [
+			"Vulcan",
+			"Laconia",
+			"Vogsphere",
+			"Ilus",
+			"Alderaan",
+			"Apetos",
+			"Auberon",
+			"Zarkon",
+			"Tellusia",
+			"X",
+		]
 
 		for p in range(self.number_of_planets):
 			lab = f"{planet_names[p]}; nr. {ordered_planets[p]}"
@@ -120,12 +127,12 @@ class SolarSys(SolarSystem):
 			plt.plot(*self.a_pos, "y", label="analytical")
 		plt.scatter(*self.initial_positions, label="init")
 		if i:
-			plt.scatter(*self.i_pos[:,:,-1], label="final i")
+			plt.scatter(*self.i_pos[:, :, -1], label="final i")
 		if d:
-			plt.scatter(*self.d_pos[:,:,-1], label="final d")
+			plt.scatter(*self.d_pos[:, :, -1], label="final d")
 		if o:
-			plt.scatter(*self.pos[:,:,-1], label="final pos")
-		plt.scatter([0], [0], s=80, c=np.array(self.star_color)/255)
+			plt.scatter(*self.pos[:, :, -1], label="final pos")
+		plt.scatter([0], [0], s=80, c=np.array(self.star_color) / 255)
 
 		plt.grid()
 		plt.axis("equal")
@@ -152,13 +159,12 @@ class SolarSys(SolarSystem):
 			self.differential_orbits(batch_size, dt_pr_yr, True)
 
 			if n != 0:
-				pos = np.concatenate((prev_pos, self.d_pos), axis = 2)
+				pos = np.concatenate((prev_pos, self.d_pos), axis=2)
 			else:
 				pos = self.d_pos
 
 			np.save(filename, pos)
 			self.pos = pos
-
 
 
 if __name__ == "__main__":
