@@ -69,6 +69,28 @@ class SolarSys(SolarSystem):
 		self.la_idx = la_idx
 		self.p_mass = p_mass
 
+	def plot_two_pos(self):
+		S = np.transpose(self.solar_orb)
+		P = np.transpose(self.planet_orb)
+
+		plt.plot(*S, color=np.array(self.star_color) / 255, label="Sun")
+		plt.plot(*P, "c", label="Planet")
+		plt.scatter([0], [0], label="Centre of mass")
+
+		plt.grid()
+		plt.axis("equal")
+		plt.legend(loc=1)
+		plt.show()
+
+	def radial_vel(self, i=np.pi / 2):
+		xvel = np.sin(i) * self.vel[:, 0, 0]
+		noise = np.random.normal(0, 0.2 * xvel.max(), len(xvel))
+		V = 1444
+		self.vnoise = xvel + noise + V
+
+		plt.plot(self.time, self.vnoise)
+		plt.show()
+
 	def energy_conserve(self):
 		relvel = np.linalg.norm(self.vel[:, 0] - self.vel[:, 1], axis=1)
 		relpos = np.linalg.norm(self.solar_orb - self.planet_orb, axis=1)
@@ -83,33 +105,24 @@ class SolarSys(SolarSystem):
 		plt.plot(self.time, self.E)
 		plt.show()
 
-	def radial_vel(self, i=np.pi):
-		xvel = np.sin(i) * self.vel[:, 0, 0]
-		noise = np.random.normal(0, 0.2 * xvel.max(), len(xvel))
-		V = 1444
-		self.vnoise = xvel + noise + V
+	def light_curve(self):
+		def section_area(h):
+			return r ** 2 * np.arccos((r - h) / r) - (r - h) * np.sqrt(2 * r * h - h ** 2)
 
-		plt.plot(self.time, self.vnoise)
-		plt.show()
+		R = self.star_radius
+		r = self.radii[self.la_idx]
 
-	def plot_two_pos(self):
-		S = np.transpose(self.solar_orb)
-		P = np.transpose(self.planet_orb)
+		lc_time = np.linspace(0, 1, 1000)
 
-		plt.plot(*S, color=np.array(self.star_color) / 255, label="Sun")
-		plt.plot(*P, "c", label="Planet")
-		plt.scatter([0], [0], label="Centre of mass")
-
-		plt.grid()
-		plt.axis("equal")
-		plt.legend(loc=1)
-		plt.show()
 
 	def assemble_data(self):
 		first = np.concatenate(([self.star_mass], self.vnoise))
 		sec = np.concatenate(([self.p_mass], self.time))
 		data = np.concatenate(([first], [sec]))
 		np.save("radial_velocity_curve.npy", data)
+
+def planet_mass(vs, P, ms, i=np.pi/2):
+	return ms ** (2 / 3) * vs * (2 * np.pi * const.G_sol) ** 3 * P ** -3 / np.sin(i)
 
 
 
