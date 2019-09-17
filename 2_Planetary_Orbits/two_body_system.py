@@ -88,8 +88,8 @@ class SolarSys(SolarSystem):
 		V = 1444
 		self.vnoise = xvel + noise + V
 
-		plt.plot(self.time, self.vnoise)
-		plt.show()
+		# plt.plot(self.time, self.vnoise)
+		# plt.show()
 
 	def energy_conserve(self):
 		relvel = np.linalg.norm(self.vel[:, 0] - self.vel[:, 1], axis=1)
@@ -134,8 +134,8 @@ class SolarSys(SolarSystem):
 
 		self.light_curve = light_curve + np.random.normal(0, 0.2, 5000)
 
-		plt.plot(self.full_time, self.light_curve)
-		plt.show()
+		# plt.plot(self.full_time, self.light_curve)
+		# plt.show()
 
 
 
@@ -153,7 +153,7 @@ class SolarSys(SolarSystem):
 
 
 def planet_mass(vs, P, ms, i=np.pi/2):
-	return ms ** (2 / 3) * vs * (2 * np.pi * const.G_sol) ** 3 * P ** -3 / np.sin(i)
+	return ms ** (2 / 3) * vs * (2 * np.pi * const.G_sol) ** (-1 / 3) * P ** (1 / 3) / np.sin(i)
 
 
 
@@ -192,7 +192,9 @@ class least_squares:
 		# residuals = self.residual(permutations)
 		# best = np.argmin(residuals)
 		# print(np.argmin(R, axis=None))
-		return permutations[np.unravel_index(np.argmin(R, axis=None), R.shape)]
+		idx = np.unravel_index(np.argmin(R, axis = None), R.shape)
+		print(idx)
+		return permutations[idx]
 
 		# return permutations[best]
 
@@ -234,15 +236,15 @@ class non_linear_reg:
 
 		return Bs
 
-	def singsol(self, Bs):
-		Ji = self.Jacobi(self.t, *Bs)
-		ri = self.residual(self.t, self.data, *Bs)
+	# def singsol(self, Bs):
+	# 	Ji = self.Jacobi(self.t, *Bs)
+	# 	ri = self.residual(self.t, self.data, *Bs)
 
-		Bs = Bs - np.matmul(
-			np.linalg.inv(np.matmul(np.transpose(Ji), Ji)),
-			np.matmul(np.transpose(Ji), ri),
-		)
-		return Bs
+	# 	Bs = Bs - np.matmul(
+	# 		np.linalg.inv(np.matmul(np.transpose(Ji), Ji)),
+	# 		np.matmul(np.transpose(Ji), ri),
+	# 	)
+	# 	return Bs
 
 
 if __name__ == "__main__":
@@ -251,32 +253,37 @@ if __name__ == "__main__":
 	system = SolarSys(seed)
 
 	yrs = 40
-	dt = 1e-3
+	dt = 1e-2
 
 	system.two_body_system(yrs, dt)
-	system.plot_two_pos()
-	system.energy_conserve()
+	# system.plot_two_pos()
+	# system.energy_conserve()
 	system.radial_vel(i=2*np.pi/3)
-	system.light_curve()
+	# system.light_curve()
 	# system.assemble_data()
 
 	# print(len(system.vnoise))
 	# # np.save("star_data.npy", system.vnoise)
 	# # np.save("times.npy", system.time)
-	# times = system.time
-	# data = system.vnoise
-	# print("Finished data_gen")
+	times = system.time
+	data = system.vnoise
+	data -= np.mean(data)
+	print("Finished data_gen")
 
-	# Bs = [0.027, 2.6, -0.25]
-	# Bs = [0.1, 3.14, 0]
+	# quite good values [0.027, 2.6, -0.25]
+	Bs = [0.1, 3.14, 0]
 
 	# data = np.load("star_data.nyp.npy")
 	# times = np.load("times.npy")
 
+	print(planet_mass(0.01969697, 2.60606061, system.star_mass, 2*np.pi/3))
+	print(system.masses[system.la_idx])
+
 	# plt.plot(times, data, label="data")
 
-	# lesq = least_squares(data, times, 10)
-	# Bs = lesq.find_best(0, 0.5, 1, 5, -1, 1)
+	# lesq = least_squares(data, times, 100)
+	# Bs = lesq.find_best(0, 0.5, 1, 5, -1, 1) # First try
+	# Bs = lesq.find_best(0.01, 0.03, 2, 3, -0.3, -0.2) # Second try
 	# plt.plot(times, lesq.f(times, *Bs), label="Least squares")
 
 	# reg = non_linear_reg(data, times)
