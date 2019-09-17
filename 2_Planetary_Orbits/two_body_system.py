@@ -88,8 +88,8 @@ class SolarSys(SolarSystem):
 		V = 1444
 		self.vnoise = xvel + noise + V
 
-		# plt.plot(self.time, self.vnoise)
-		# plt.show()
+		plt.plot(self.time, self.vnoise)
+		plt.show()
 
 	def energy_conserve(self):
 		relvel = np.linalg.norm(self.vel[:, 0] - self.vel[:, 1], axis=1)
@@ -134,21 +134,20 @@ class SolarSys(SolarSystem):
 
 		self.light_curve = light_curve + np.random.normal(0, 0.2, 5000)
 
-		# plt.plot(self.full_time, self.light_curve)
-		# plt.show()
+		plt.plot(self.full_time, self.light_curve)
+		plt.show()
 
 
 
 	def assemble_data(self):
-		first = np.concatenate(([self.star_mass], self.vnoise))
-		sec = np.concatenate(([self.p_mass], self.time))
-		data = np.concatenate(([first], [sec]))
-		np.save("radial_velocity_curve.npy", data)
+		rvs = np.concatenate(([self.time], [self.vnoise]))
+		np.save("radial_velocity_curve_single.npy", rvs)
 
-		first = np.concatenate(([self.star_radius], self.light_curve))
-		sec = np.concatenate(([self.radii[self.la_idx]], self.full_time))
-		data = np.concatenate(([first], [sec]))
-		np.save("light_curve.npy", data)
+		lc = np.concatenate(([self.full_time], [self.light_curve]))
+		np.save("light_curve.npy", lc)
+
+		info = np.array([self.radii[self.la_idx], self.p_mass, self.star_mass])
+		np.save("info.npy", info)
 
 
 
@@ -253,31 +252,31 @@ if __name__ == "__main__":
 	system = SolarSys(seed)
 
 	yrs = 40
-	dt = 1e-2
+	dt = 1e-4
 
 	system.two_body_system(yrs, dt)
-	# system.plot_two_pos()
+	system.plot_two_pos()
 	# system.energy_conserve()
 	system.radial_vel(i=2*np.pi/3)
-	# system.light_curve()
-	# system.assemble_data()
+	system.light_curve()
+	system.assemble_data()
 
 	# print(len(system.vnoise))
 	# # np.save("star_data.npy", system.vnoise)
 	# # np.save("times.npy", system.time)
-	times = system.time
-	data = system.vnoise
-	data -= np.mean(data)
-	print("Finished data_gen")
+	# times = system.time
+	# data = system.vnoise
+	# data -= np.mean(data)
+	# print("Finished data_gen")
 
 	# quite good values [0.027, 2.6, -0.25]
-	Bs = [0.1, 3.14, 0]
+	# Bs = [0.1, 3.14, 0]
 
 	# data = np.load("star_data.nyp.npy")
 	# times = np.load("times.npy")
 
-	print(planet_mass(0.01969697, 2.60606061, system.star_mass, 2*np.pi/3))
-	print(system.masses[system.la_idx])
+	# print(planet_mass(0.01969697, 2.60606061, system.star_mass, 2*np.pi/3))
+	# print(system.masses[system.la_idx])
 
 	# plt.plot(times, data, label="data")
 
