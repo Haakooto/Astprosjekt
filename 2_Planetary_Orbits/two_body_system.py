@@ -101,7 +101,6 @@ class SolarSys(SolarSystem):
 			0.5 * mu_hat * relvel ** 2
 			- const.G_sol * (self.star_mass + self.p_mass) * mu_hat / relpos
 		)
-
 		plt.plot(self.time, self.E)
 		plt.show()
 
@@ -109,10 +108,35 @@ class SolarSys(SolarSystem):
 		def section_area(h):
 			return r ** 2 * np.arccos((r - h) / r) - (r - h) * np.sqrt(2 * r * h - h ** 2)
 
-		R = self.star_radius
-		r = self.radii[self.la_idx]
+		R = util.km_to_AU(self.star_radius)
+		star_area = np.pi * R ** 2
+		r = util.km_to_AU(self.radii[self.la_idx])
 
-		lc_time = np.linspace(0, 1, 1000)
+		velo = np.linalg.norm(self.initial_velocities[:, self.la_idx])
+
+		partial_time = 2 * r / velo
+		crossing_time = 2 * R / velo - partial_time
+
+		time_before = np.linspace(0, 5 * partial_time, 1000)
+		time_enter = np.linspace(5 * partial_time, 6 * partial_time, 1000)
+		time_cross = np.linspace(6 * partial_time, 6 * partial_time + crossing_time, 1000)
+		time_exit = np.linspace(time_cross[-1], time_cross[-1] + partial_time, 1000)
+		time_after = np.linspace(time_exit[-1], time_exit[-1] + time_before[-1], 1000)
+
+		before = np.ones(1000)
+		after = np.ones_like(before)
+		enter = 1 - section_area(2 * r * np.linspace(0, 1, 1000)) / star_area
+		exit = enter[::-1]
+		cross = np.array([enter[-1]] * 1000)
+
+		self.full_time = np.concatenate((time_before, time_enter, time_cross, time_exit, time_after))
+		light_curve = np.concatenate((before, enter, cross, exit, after))
+
+		self.light_curve = light_curve + np.random.normal(0, 0.2, 5000)
+
+		plt.plot(self.full_time, self.light_curve)
+		plt.show()
+
 
 
 	def assemble_data(self):
@@ -120,6 +144,13 @@ class SolarSys(SolarSystem):
 		sec = np.concatenate(([self.p_mass], self.time))
 		data = np.concatenate(([first], [sec]))
 		np.save("radial_velocity_curve.npy", data)
+
+		first = np.concatenate(([self.star_radius], self.light_curve))
+		sec = np.concatenate(([self.radii[self.la_idx]], self.full_time))
+		data = np.concatenate(([first], [sec]))
+		np.save("light_curve.npy", data)
+
+
 
 def planet_mass(vs, P, ms, i=np.pi/2):
 	return ms ** (2 / 3) * vs * (2 * np.pi * const.G_sol) ** 3 * P ** -3 / np.sin(i)
@@ -219,14 +250,15 @@ if __name__ == "__main__":
 
 	system = SolarSys(seed)
 
-	yrs = 50
+	yrs = 40
 	dt = 1e-3
 
 	system.two_body_system(yrs, dt)
-	# system.plot_two_pos()
-	# system.energy_conserve()
+	system.plot_two_pos()
+	system.energy_conserve()
 	system.radial_vel(i=2*np.pi/3)
-	system.assemble_data()
+	system.light_curve()
+	# system.assemble_data()
 
 	# print(len(system.vnoise))
 	# # np.save("star_data.npy", system.vnoise)
