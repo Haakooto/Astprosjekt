@@ -7,18 +7,9 @@ Håkon Olav Torvik og Tobias Baumann
 ## Gjøreliste
 
 ### pri 1
-Finne formel for antall partikler som treffer vegg [begge]
-
-Restrukturere kode for videre bruk [ho]
-
-Begynne å skrive artikkel [begge]
+Gjøre ferdig artikkel 1 (diskusjon, konklusjon og forklarende figur) [ho]
+Gjøre ferdig del 2 [begge]
+Fortsette på artikkel 2 [begge]
 
 ### pri 2
-Føre inn analytiske beregninger [to]
-
-Gjøre masseberegning (1D) []
-
-Skyte opp (1E) []
-
-orientere i solsytem (1F) []
-
+Starte på del 3 [begge]
