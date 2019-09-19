@@ -27,7 +27,6 @@ class least_squares:
 		permutations = np.transpose(np.asarray(np.meshgrid(v, P, t)), (1, 2, 3, 0))
 
 		R = np.zeros(([self.N] * 3))
-		# print(self.residual(0, permutations).shape)
 
 		for m in range(len(self.data)):
 			R += self.residual(m, permutations)
@@ -36,7 +35,7 @@ class least_squares:
 		# best = np.argmin(residuals)
 		# print(np.argmin(R, axis=None))
 		idx = np.unravel_index(np.argmin(R, axis = None), R.shape)
-		print(idx)
+		# print(idx)
 		return permutations[idx]
 
 		# return permutations[best]
@@ -51,7 +50,6 @@ class non_linear_reg:
 
 	def residual(self, x, y, v, P, t0):
 		res = y - self.f(x, v, P, t0)
-		# print(sum(res))
 		return res
 
 	def Jacobi(self, x, v, P, t0):
@@ -61,13 +59,18 @@ class non_linear_reg:
 
 		return np.transpose([dr_dv, dr_dP, dr_dt0])
 
-	def solve(self, N, v0, P0, t00):
+	def solve(self, v0, P0, t00, N=100):
 
 		Bs = np.array([v0, P0, t00])
-
+		worst = 100
 		for i in range(N):
 			Ji = self.Jacobi(self.t, *Bs)
 			ri = self.residual(self.t, self.data, *Bs)
+
+			if abs(ri.max() - worst) < 1e-15:
+				print(i)
+				print("tol level reached")
+				break
 
 			try:
 				Bs = Bs - np.matmul(
@@ -77,14 +80,6 @@ class non_linear_reg:
 			except:
 				break
 
+			worst = ri.max()
+
 		return Bs
-
-	# def singsol(self, Bs):
-	# 	Ji = self.Jacobi(self.t, *Bs)
-	# 	ri = self.residual(self.t, self.data, *Bs)
-
-	# 	Bs = Bs - np.matmul(
-	# 		np.linalg.inv(np.matmul(np.transpose(Ji), Ji)),
-	# 		np.matmul(np.transpose(Ji), ri),
-	# 	)
-	# 	return Bs
