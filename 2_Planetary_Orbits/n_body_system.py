@@ -1,5 +1,5 @@
 """
-Program for å _lage hastighetsplot, og løse det
+Program for å simulere N 2-legemesystem sammtidig
 
 All kode er egenskrevet
 
@@ -21,11 +21,11 @@ class SolarSys(SolarSystem):
 		self.one_year = np.sqrt(self.semi_major_axes[0] ** 3 / self.star_mass)
 		self.one_years = np.sqrt(self.semi_major_axes ** 3 / self.star_mass)
 
-		dists = np.linalg.norm(self.initial_positions, axis = 0)
-		self.non_ordered_planets = np.argsort(dists)[::-1]
-
 		if type(N) == "str":
 			N = self.number_of_planets
+		if type(N) != "int" and N <= self.number_of_planets:
+			print(f"number of planets must be int or 'all', and less than {self.number_of_planets}")
+			sys.exit()
 
 		las = self.find_largest_attractor()
 		self.planets = las[:N]
@@ -81,20 +81,6 @@ class SolarSys(SolarSystem):
 		self.planet_orbs = R[:, 1:]
 		self.vels = V
 
-	# def energy_conserve(self):
-	# 	relvel = np.linalg.norm(self.vel[:, 0] - self.vel[:, 1:], axis=1)
-	# 	relpos = np.linalg.norm(self.solar_orb - self.planet_orb, axis=1)
-
-	# 	mu_hat = self.star_mass * self.p_mass / (self.star_mass + self.p_mass)
-
-	# 	self.E = (
-	# 		0.5 * mu_hat * relvel ** 2
-	# 		- const.G_sol * (self.star_mass + self.p_mass) * mu_hat / relpos
-	# 	)
-
-	# 	plt.plot(self.time, self.E)
-	# 	plt.show()
-
 	def radial_vel(self, i=np.pi):
 		xvel = np.sin(i) * self.vels[:, 0, 0]
 		noise = np.random.normal(0, 0.2 * xvel.max(), len(xvel))
@@ -112,7 +98,7 @@ class SolarSys(SolarSystem):
 
 		plt.plot(*S, color=np.array(self.star_color) / 255, label="Sun")
 		for p in range(self.my_number_of_planets):
-			lab = planet_names[self.non_ordered_planets[p]]
+			lab = planet_names[p]
 			plt.plot(*P[p], "c", label=lab)
 		plt.scatter([0], [0], label="Centre of mass")
 
@@ -128,18 +114,22 @@ class SolarSys(SolarSystem):
 
 
 if __name__ == "__main__":
+	import time
+
+	timer = time.time()
 	seed = util.get_seed("haakooto")
 
-	system = SolarSys(seed, 4)
+	system = SolarSys(seed, 2)
 
 	yrs = 40
 	dt = 1e-3
 
 	system.N_body_system(yrs, dt)
+	print(time.time()- timer)
 	# system.plot_n_pos()
 	# system.energy_conserve()
-	system.radial_vel(i=2*np.pi/3)
-	system.assemble_data()
+	# system.radial_vel(i=2*np.pi/3)
+	# system.assemble_data()
 
 	# np.save("star_data.npy", system.vnoise)
 	# np.save("times.npy", system.time)
