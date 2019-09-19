@@ -1,5 +1,5 @@
 """
-Program for å _lage hastighetsplot, og løse det
+Program for å simulere 1 2-legemesystem
 
 All kode er egenskrevet
 
@@ -13,6 +13,8 @@ import ast2000tools.utils as util
 import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
+
+import data_analysis as da
 
 
 class SolarSys(SolarSystem):
@@ -155,122 +157,30 @@ def planet_mass(vs, P, ms, i=np.pi/2):
 	return ms ** (2 / 3) * vs * (2 * np.pi * const.G_sol) ** (-1 / 3) * P ** (1 / 3) / np.sin(i)
 
 
-
-class least_squares:
-	def __init__(self, data, time, N):
-		# self.data = np.transpose(np.array([[[data] * N] * N] * N), (3, 0, 1, 2))
-		# self.t = np.transpose(np.array([[[time] * N] * N] * N), (3, 0, 1, 2))
-		self.data = data
-		self.t = times
-		self.N = N
-
-	def f(self, x, v, P, t0):
-		return v * np.cos(2 * np.pi * (x - t0) / P)
-
-	def residual(self, m, Bs, sigma = 1):
-
-		v = Bs[:, :, :, 0]
-		P = Bs[:, :, :, 1]
-		t0 = Bs[:, :, :, 2]
-		return (self.data[m] - self.f(self.t[m], v, P, t0)) ** 2 / sigma ** 2
-
-	def find_best(self, v_d, v_u, P_d, P_u, t_d, t_u):
-		v = np.linspace(v_d, v_u, self.N)
-		P = np.linspace(P_d, P_u, self.N)
-		t = np.linspace(t_d, t_u, self.N)
-
-
-		permutations = np.transpose(np.asarray(np.meshgrid(v, P, t)), (1, 2, 3, 0))
-
-		R = np.zeros(([self.N] * 3))
-		# print(self.residual(0, permutations).shape)
-
-		for m in range(len(self.data)):
-			R += self.residual(m, permutations)
-		# print(permutations.shape)
-		# residuals = self.residual(permutations)
-		# best = np.argmin(residuals)
-		# print(np.argmin(R, axis=None))
-		idx = np.unravel_index(np.argmin(R, axis = None), R.shape)
-		print(idx)
-		return permutations[idx]
-
-		# return permutations[best]
-
-class non_linear_reg:
-	def __init__(self, data, time):
-		self.data = data
-		self.t = time
-
-	def f(self, x, v, P, t0):
-		return v * np.cos(2 * np.pi * (x - t0) / P)
-
-	def residual(self, x, y, v, P, t0):
-		res = y - self.f(x, v, P, t0)
-		# print(sum(res))
-		return res
-
-	def Jacobi(self, x, v, P, t0):
-		dr_dv = -np.cos(2 * np.pi * (x - t0) / P)
-		dr_dP = 2 * np.pi * v * (t0 - x) * np.sin(2 * np.pi * (x - t0) / P) / P ** 2
-		dr_dt0 = -2 * np.pi * v * np.sin(2 * np.pi * (x - t0) / P) / P
-
-		return np.transpose([dr_dv, dr_dP, dr_dt0])
-
-	def solve(self, N, v0, P0, t00):
-
-		Bs = np.array([v0, P0, t00])
-
-		for i in range(N):
-			Ji = self.Jacobi(self.t, *Bs)
-			ri = self.residual(self.t, self.data, *Bs)
-
-			try:
-				Bs = Bs - np.matmul(
-					np.linalg.inv(np.matmul(np.transpose(Ji), Ji)),
-					np.matmul(np.transpose(Ji), ri),
-				)
-			except:
-				break
-
-		return Bs
-
-	# def singsol(self, Bs):
-	# 	Ji = self.Jacobi(self.t, *Bs)
-	# 	ri = self.residual(self.t, self.data, *Bs)
-
-	# 	Bs = Bs - np.matmul(
-	# 		np.linalg.inv(np.matmul(np.transpose(Ji), Ji)),
-	# 		np.matmul(np.transpose(Ji), ri),
-	# 	)
-	# 	return Bs
-
-
 if __name__ == "__main__":
 	seed = util.get_seed("haakooto")
 
 	system = SolarSys(seed)
 
 	yrs = 40
-	dt = 1e-4
+	dt = 1e-1
 
 	system.two_body_system(yrs, dt)
-	system.plot_two_pos()
+	# system.plot_two_pos()
 	# system.energy_conserve()
 	system.radial_vel(i=2*np.pi/3)
-	system.light_curve()
-	system.assemble_data()
+	# system.light_curve()
+	# system.assemble_data()
 
-	# print(len(system.vnoise))
-	# # np.save("star_data.npy", system.vnoise)
-	# # np.save("times.npy", system.time)
-	# times = system.time
-	# data = system.vnoise
-	# data -= np.mean(data)
-	# print("Finished data_gen")
+	# np.save("star_data.npy", system.vnoise)
+	# np.save("times.npy", system.time)
+	times = system.time
+	data = system.vnoise
+	data -= np.mean(data)
+	print("Finished data_gen")
 
-	# quite good values [0.027, 2.6, -0.25]
-	# Bs = [0.1, 3.14, 0]
+	# quite good values for 2-body radial vel [0.027, 2.6, -0.25]
+	init_g = [0.1, 3.14, 1] #initial guess, upper
 
 	# data = np.load("star_data.nyp.npy")
 	# times = np.load("times.npy")
@@ -278,17 +188,20 @@ if __name__ == "__main__":
 	# print(planet_mass(0.01969697, 2.60606061, system.star_mass, 2*np.pi/3))
 	# print(system.masses[system.la_idx])
 
-	# plt.plot(times, data, label="data")
+	plt.plot(times, data, label="data")
 
-	# lesq = least_squares(data, times, 100)
-	# Bs = lesq.find_best(0, 0.5, 1, 5, -1, 1) # First try
-	# Bs = lesq.find_best(0.01, 0.03, 2, 3, -0.3, -0.2) # Second try
-	# plt.plot(times, lesq.f(times, *Bs), label="Least squares")
+	lesq = da.least_squares(data, times, 100)
+	v, P, t0 = init_g
+	v, P, t0 = lesq.find_best(0, v, 0.01, P, -t0, t0) # First try
+	print(v, P, t0)
+	Bs = lesq.find_best(0.5*v, 1.5*v, 0.5*P, 1.5*P, 0.5*t0, 1.5*t0) # Second try
+	print(Bs)
+	plt.plot(times, lesq.f(times, *Bs), label="Least squares")
 
 	# reg = non_linear_reg(data, times)
 	# Bs = reg.solve(100, *Bs)
 	# plt.plot(times, reg.f(times, *Bs), label="Gauss_Newton")
 
 	# print(Bs)
-	# plt.legend()
-	# plt.show()
+	plt.legend()
+	plt.show()
