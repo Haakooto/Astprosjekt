@@ -90,8 +90,8 @@ class SolarSys(SolarSystem):
 		V = 1444
 		self.vnoise = xvel + noise + V
 
-		plt.plot(self.time, self.vnoise)
-		plt.show()
+		# plt.plot(self.time, self.vnoise)
+		# plt.show()
 
 	def energy_conserve(self):
 		relvel = np.linalg.norm(self.vel[:, 0] - self.vel[:, 1], axis=1)
@@ -119,22 +119,24 @@ class SolarSys(SolarSystem):
 		partial_time = 2 * r / velo
 		crossing_time = 2 * R / velo - partial_time
 
-		time_before = np.linspace(0, 5 * partial_time, 1000)
-		time_enter = np.linspace(5 * partial_time, 6 * partial_time, 1000)
-		time_cross = np.linspace(6 * partial_time, 6 * partial_time + crossing_time, 1000)
-		time_exit = np.linspace(time_cross[-1], time_cross[-1] + partial_time, 1000)
-		time_after = np.linspace(time_exit[-1], time_exit[-1] + time_before[-1], 1000)
+		Ps = 100
 
-		before = np.ones(1000)
+		time_before = np.linspace(0, 5 * partial_time, Ps)
+		time_enter = np.linspace(5 * partial_time, 6 * partial_time, Ps)
+		time_cross = np.linspace(6 * partial_time, 6 * partial_time + crossing_time, Ps)
+		time_exit = np.linspace(time_cross[-1], time_cross[-1] + partial_time, Ps)
+		time_after = np.linspace(time_exit[-1], time_exit[-1] + time_before[-1], Ps)
+
+		before = np.ones(Ps)
 		after = np.ones_like(before)
-		enter = 1 - section_area(2 * r * np.linspace(0, 1, 1000)) / star_area
+		enter = 1 - section_area(2 * r * np.linspace(0, 1, Ps)) / star_area
 		exit = enter[::-1]
-		cross = np.array([enter[-1]] * 1000)
+		cross = np.array([enter[-1]] * Ps)
 
 		self.full_time = np.concatenate((time_before, time_enter, time_cross, time_exit, time_after))
 		light_curve = np.concatenate((before, enter, cross, exit, after))
 
-		self.light_curve = light_curve + np.random.normal(0, 0.2, 5000)
+		self.light_curve = light_curve + np.random.normal(0, 0.02, 5 * Ps)
 
 		plt.plot(self.full_time, self.light_curve)
 		plt.show()
@@ -142,8 +144,8 @@ class SolarSys(SolarSystem):
 
 
 	def assemble_data(self):
-		rvs = np.concatenate(([self.time], [self.vnoise]))
-		np.save("radial_velocity_curve_single.npy", rvs)
+		# rvs = np.concatenate(([self.time], [self.vnoise]))
+		# np.save("radial_velocity_curve_single.npy", rvs)
 
 		lc = np.concatenate(([self.full_time], [self.light_curve]))
 		np.save("light_curve.npy", lc)
@@ -163,45 +165,54 @@ if __name__ == "__main__":
 	system = SolarSys(seed)
 
 	yrs = 40
-	dt = 1e-1
+	dt = 1e-2
 
-	system.two_body_system(yrs, dt)
+	# system.two_body_system(yrs, dt)
 	# system.plot_two_pos()
 	# system.energy_conserve()
-	system.radial_vel(i=2*np.pi/3)
+	# system.radial_vel(i=2*np.pi/3)
 	# system.light_curve()
 	# system.assemble_data()
 
 	# np.save("star_data.npy", system.vnoise)
 	# np.save("times.npy", system.time)
-	times = system.time
-	data = system.vnoise
-	data -= np.mean(data)
-	print("Finished data_gen")
+	# times = system.time
+	# data = system.vnoise
+	# data -= np.mean(data)
+
+	# star_mass = system.star_mass
+	# mass = system.masses[system.la_idx]
+	# print("Finished data_gen")
 
 	# quite good values for 2-body radial vel [0.027, 2.6, -0.25]
-	init_g = [0.1, 3.14, 1] #initial guess, upper
+	init_g = [0.01, 200, 150] #initial guess, upper
 
-	# data = np.load("star_data.nyp.npy")
-	# times = np.load("times.npy")
+	inp_data = np.load("ex_velocity_curve.npy")
+	times = inp_data[0][::100]
+	data = inp_data[1][::100]
+	data -= np.mean(data)
 
-	# print(planet_mass(0.01969697, 2.60606061, system.star_mass, 2*np.pi/3))
-	# print(system.masses[system.la_idx])
+	info = np.load("ex_info.npy")
+	mass = info[1]
+	star_mass = info[2]
 
 	plt.plot(times, data, label="data")
 
-	lesq = da.least_squares(data, times, 100)
-	v, P, t0 = init_g
-	v, P, t0 = lesq.find_best(0, v, 0.01, P, -t0, t0) # First try
-	print(v, P, t0)
-	Bs = lesq.find_best(0.5*v, 1.5*v, 0.5*P, 1.5*P, 0.5*t0, 1.5*t0) # Second try
-	print(Bs)
-	plt.plot(times, lesq.f(times, *Bs), label="Least squares")
-
-	# reg = non_linear_reg(data, times)
-	# Bs = reg.solve(100, *Bs)
-	# plt.plot(times, reg.f(times, *Bs), label="Gauss_Newton")
-
+	# lesq = da.least_squares(data, times, 100)
+	# v, P, t0 = init_g
+	# v, P, t0 = lesq.find_best(0, v, 0.01, P, -t0, t0) # First try
+	# # print(v, P, t0)
+	# Bs = lesq.find_best(0.9*v, 1.1*v, 0.9*P, 1.1*P, 0.9*t0, 1.1*t0) # Second try
 	# print(Bs)
+	# print(f"Estimated mass (least squares): {planet_mass(Bs[0], Bs[1], system.star_mass)}")
+	# plt.plot(times, lesq.f(times, *Bs), label="Least squares")
+
+	reg = da.non_linear_reg(data, times)
+	Bs = reg.solve(*init_g)
+	print(Bs)
+	plt.plot(times, reg.f(times, *Bs), label="Gauss-Newton")
+
+	print(f"Estimated mass (Gauss-Newton): {planet_mass(abs(Bs[0]), abs(Bs[1]), star_mass)}")
+	print(f"Actual mass: {mass}")
 	plt.legend()
 	plt.show()
