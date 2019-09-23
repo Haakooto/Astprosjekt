@@ -8,6 +8,7 @@ All kode er egenskrevet
 import numpy as np
 import sys, os
 import matplotlib.pyplot as plt
+from matplotlib import rc
 
 import ast2000tools.utils as util
 import ast2000tools.constants as const
@@ -15,6 +16,8 @@ from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
 import data_analysis as da
+
+rc("text", usetex=True)
 
 
 class SolarSys(SolarSystem):
@@ -144,14 +147,14 @@ class SolarSys(SolarSystem):
 
 
 	def assemble_data(self):
-		# rvs = np.concatenate(([self.time], [self.vnoise]))
-		# np.save("radial_velocity_curve_single.npy", rvs)
+		rvs = np.concatenate(([self.time], [self.vnoise]))
+		np.save("npys/radial_velocity_curve_single.npy", rvs)
 
 		lc = np.concatenate(([self.full_time], [self.light_curve]))
-		np.save("light_curve.npy", lc)
+		np.save("npys/light_curve.npy", lc)
 
 		info = np.array([self.radii[self.la_idx], self.p_mass, self.star_mass])
-		np.save("info.npy", info)
+		np.save("npys/info.npy", info)
 
 
 
@@ -185,19 +188,24 @@ if __name__ == "__main__":
 	# print("Finished data_gen")
 
 	# quite good values for 2-body radial vel [0.027, 2.6, -0.25]
-	init_g = [0.01, 200, 150] #initial guess, upper
+	init_g = [0.01, 300, 150] #initial guess, upper
 
-	inp_data = np.load("ex_velocity_curve.npy")
-	times = inp_data[0][::100]
-	data = inp_data[1][::100]
-	data -= np.mean(data)
+	inp_data = np.load("npys/ex_velocity_curve.npy")
+	times = inp_data[0][::]
+	data = inp_data[1][::]
 
-	info = np.load("ex_info.npy")
+	info = np.load("npys/ex_info.npy")
 	mass = info[1]
 	star_mass = info[2]
 
 	plt.plot(times, data, label="data")
+	plt.xlabel("time [yr]")
+	plt.ylabel("velocity [AU/yr]")
+	plt.title("Radial velocity curve")
+	plt.savefig("plots/rad_vel_raw.pdf")
+	plt.clf()
 
+	data -= np.mean(data)
 	# lesq = da.least_squares(data, times, 100)
 	# v, P, t0 = init_g
 	# v, P, t0 = lesq.find_best(0, v, 0.01, P, -t0, t0) # First try
@@ -209,10 +217,16 @@ if __name__ == "__main__":
 
 	reg = da.non_linear_reg(data, times)
 	Bs = reg.solve(*init_g)
-	print(Bs)
-	plt.plot(times, reg.f(times, *Bs), label="Gauss-Newton")
 
+	print(Bs)
 	print(f"Estimated mass (Gauss-Newton): {planet_mass(abs(Bs[0]), abs(Bs[1]), star_mass)}")
 	print(f"Actual mass: {mass}")
+
+	plt.plot(times, data, label="Raw data")
+	plt.plot(times, reg.f(times, *Bs), label="Estimated curve")
+	plt.xlabel("time [yr]")
+	plt.ylabel("velocity [AU/yr]")
+	plt.title("Data with noise vs estimated curve")
 	plt.legend()
-	plt.show()
+	plt.savefig("plots/rad_vel_estimate.pdf", bbox="tight")
+	plt.clf()
