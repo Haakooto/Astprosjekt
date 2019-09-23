@@ -17,6 +17,7 @@ from ast2000tools.solar_system import SolarSystem
 
 util.check_for_newer_version()
 
+
 class SolarSys(SolarSystem):
 	def __init__(self, seed, data_path=None, has_moons=True, verbose=True):
 		SolarSystem.__init__(self, seed, data_path=None, has_moons=True, verbose=True)
@@ -24,6 +25,10 @@ class SolarSys(SolarSystem):
 		self.spin = (
 			self.initial_positions[0] * self.initial_velocities[1]
 			- self.initial_positions[1] * self.initial_velocities[0]
+		)
+
+		self.ordered_planets = np.argsort(
+			np.argsort(np.linalg.norm(self.initial_positions, axis=0))
 		)
 
 	def analytical_orbits(self):
@@ -116,11 +121,11 @@ class SolarSys(SolarSystem):
 		]
 
 		for p in range(self.number_of_planets):
-			lab = f"{planet_names[p]}; nr. {ordered_planets[p]}"
+			lab = f"{planet_names[self.ordered_planets[p]]}; nr. {self.ordered_planets[p]}"
 			if i:
 				plt.plot(*self.i_pos[:, p, :], "b", label=f"{lab}, i")
 			if d:
-				plt.plot(*self.d_pos[:, p, :], "g", label=f"{lab}, d")
+				plt.plot(*self.d_pos[:, p, :], label=f"{lab}, d")
 			if o:
 				plt.plot(*self.pos[:, p, :], "c", label=f"{lab}, p")
 		if a:
@@ -138,6 +143,37 @@ class SolarSys(SolarSystem):
 		plt.axis("equal")
 		plt.legend(loc=1)
 		plt.show()
+
+	def animate_orbits(self):
+		from matplotlib.animation import FuncAnimation
+
+		fig = plt.figure()
+
+		# Configure figure
+		plt.axis("equal")
+		plt.axis("off")
+		xmax = 2 * np.max(abs(self.d_pos))
+		plt.axis((-xmax, xmax, -xmax, xmax))
+
+		# Make an "empty" plot object to be updated throughout the animation
+		self.positions, = plt.plot([], [], "o", lw=1)
+		# print(self.d_pos[0, :, 100-0:100+1])
+		# print(*np.vsplit(self.d_pos[0, :, 100-10:100+1], 1)[0])
+		# Call FuncAnimation
+		self.animation = FuncAnimation(
+			fig,
+			self._next_frame,
+			frames=range(len(self.time)),
+			repeat=None,
+			interval=1,  # 000 * self.dt,
+			blit=True,
+			save_count=100,
+		)
+
+	def _next_frame(self, i):
+		self.positions.set_data((0, *self.d_pos[0, :, i]), (0, *self.d_pos[1, :, i]))
+
+		return (self.positions,)
 
 	def long_run(self, total_years, dt_pr_yr, batch_size=50):
 
@@ -170,28 +206,31 @@ class SolarSys(SolarSystem):
 if __name__ == "__main__":
 	seed = util.get_seed("haakooto")
 
-	# mission = SpaceMission(seed)
-	system = SolarSys(seed)
+	# system = SolarSys(76117)
+	system = SolarSys(18116)
+	# system = SolarSys(seed)
 
-	years = 100
-	dt = 1e-4
+	years = 50
+	dt = 1e-3
+
+	# print(np.linalg.norm(system.initial_positions, axis=0))
 
 	# system.long_run(years, dt)
 
-	system.analytical_orbits()
+	# system.analytical_orbits()
 	# system.iterated_orbits(years, dt)
 	# system.load_pos(f"pos_{years}yr.npy")
 
 	# system.pos = np.load("pos_100yr.npy")
 	# system.pos = system.pos[:,:,::2]
 
-	system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
+	# system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
 	# system.t = np.linspace(0, years * system.one_year, len(system.d_pos[0][0]))
 
-	# system.differential_orbits(years, dt)
+	system.differential_orbits(years, dt)
 
-	system.plot_orbits(a=True, d=True)
-
+	system.plot_orbits(d=True)
+	system.animate_orbits()
 	# np.save(f"pos_{years}yr", system.d_pos)
 
 	# system.verify_planet_positions(years * system.one_year, system.d_pos)
