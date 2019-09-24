@@ -68,8 +68,10 @@ def verify():
 	fuel = fuel_load  # loaded fuel
 	T1 = Volcano.time  # launch duration
 	planet_pos = system.initial_positions[:, 0]
-	pos_x = planet_pos[0] + R / const.AU  # x-position relative to star
-	pos_y = planet_pos[1]
+
+	launch_site = np.pi		#angle of launch site on the equator [0,2pi]
+	pos_x = planet_pos[0] + R*np.cos(launch_site) / const.AU  # x-position relative to star
+	pos_y = planet_pos[1] + R*np.sin(launch_site)/const.AU	# y-position relative to star
 	T0 = 0  # start of launch
 
 	verify = [thrust, dm, Ne, fuel, T1, (pos_x, pos_y), T0]
@@ -78,11 +80,12 @@ def verify():
 	mission.launch_rocket()
 
 	orb_speed = system.initial_velocities[:, 0] / const.yr
+	abs_rot_speed = 2 * np.pi * R / (system.rotational_periods[0] * const.day * const.AU)
 	rot_speed = np.asarray(
-		[0, 2 * np.pi * R / (system.rotational_periods[0] * const.day * const.AU)]
+		[-np.sin(launch_site)*abs_rot_speed, np.cos(launch_site) * abs_rot_speed]
 	)
 	final_position = (
-		np.asarray([planet_pos[0] + Volcano.r / const.AU, 0])
+		np.asarray([planet_pos[0] + np.cos(launch_site) * Volcano.r / const.AU, planet_pos[1] + np.sin(launch_site) * Volcano.r / const.AU])
 		+ orb_speed * T1
 		+ rot_speed * T1
 	)
