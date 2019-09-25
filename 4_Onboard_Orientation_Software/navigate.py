@@ -54,7 +54,19 @@ else:
 dt = 1E-3
 
 r = mission.measure_distances()
-m = np.argsort(r)[:3]
+m = np.argsort(r)
+print(m)
 T = Volcano.time/const.yr/dt/system.one_year
 system.differential_orbits(20,dt)
-pos = system.d_pos[:][:][int(T)]
+pos = system.d_pos[:,:,int(T)]
+
+angle = np.linspace(0,2*np.pi,N)
+for i in range(8):
+	if m[i] == 7:
+		circle = r[7]*np.asarray([np.cos(angle),np.sin(angle)])
+		plt.plot(circle[0],circle[1])
+	else:
+		circle = np.transpose(np.asarray([pos[:,m[i]]]*N)) + r[m[i]]*np.asarray([np.cos(angle), np.sin(angle)])
+		plt.plot(circle[0],circle[1])
+
+plt.show()
