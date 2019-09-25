@@ -64,7 +64,7 @@ def do_launch():
 	return Volcano, Epstein
 
 
-def verify(rocket, engine):
+def verify(mission, system, rocket, engine):
 
 	thrust = engine.thrust  # thrust pr box
 	dm = engine.consume  # mass loss rate
