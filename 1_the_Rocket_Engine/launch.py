@@ -48,25 +48,28 @@ fuel_load = 50000
 # tobiasob: throttle = 4, fuel = 136000
 
 # Packages to build rocket and engine
-engine_build = [N, nozzle, T, L, dt_e, ts]
-rocket_build = [mass, R, M, dt_r]
+engine_build = lambda : [N, nozzle, T, L, dt_e, ts]
+rocket_build = lambda : [mass, R, M, dt_r]
+asseble = lambda engine: [engine, fuel_load, Ne]
+
+def do_launch():
+	Volcano = Rocket(*rocket_build())
+	Epstein = Engine()
+
+	Epstein.build(*engine_build())
+	Volcano.assemble(*asseble(Epstein))
+
+	Volcano.launch()
+
+	return Volcano, Epstein
 
 
-Volcano = Rocket(*rocket_build)
-Epstein = Engine()
+def verify(rocket, engine):
 
-Epstein.build(*engine_build)
-Volcano.assemble(Epstein, fuel_load, Ne)
-
-Volcano.launch()
-
-
-def verify():
-
-	thrust = Epstein.thrust  # thrust pr box
-	dm = Epstein.consume  # mass loss rate
+	thrust = engine.thrust  # thrust pr box
+	dm = engine.consume  # mass loss rate
 	fuel = fuel_load  # loaded fuel
-	T1 = Volcano.time  # launch duration
+	T1 = rocket.time  # launch duration
 	planet_pos = system.initial_positions[:, 0]
 
 	launch_site = np.pi		#angle of launch site on the equator [0,2pi]
@@ -85,7 +88,7 @@ def verify():
 		[-np.sin(launch_site)*abs_rot_speed, np.cos(launch_site) * abs_rot_speed]
 	)
 	final_position = (
-		np.asarray([planet_pos[0] + np.cos(launch_site) * Volcano.r / const.AU, planet_pos[1] + np.sin(launch_site) * Volcano.r / const.AU])
+		np.asarray([planet_pos[0] + np.cos(launch_site) * rocket.r / const.AU, planet_pos[1] + np.sin(launch_site) * rocket.r / const.AU])
 		+ orb_speed * T1
 		+ rot_speed * T1
 	)
@@ -95,4 +98,5 @@ def verify():
 
 
 if __name__ == "__main__":
-	verify()
+	rocket, engine = do_launch()
+	verify(rocket, engine)
