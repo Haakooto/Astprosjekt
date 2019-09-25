@@ -6,6 +6,7 @@ All kode er egenskrevet
 
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.integrate import solve_ivp
 
 
 class Diff_eq:
@@ -23,15 +24,12 @@ class Diff_eq:
 			* (self.a * (1 - self.e ** 2)) ** (-2)
 		)
 
-	def solve(self, u0, T, dt):
+	def solve(self, u0, T, dt, t0=0):
 		n = int(T / dt)
 		t = np.linspace(0, T, n)
 
-		u = np.zeros((len(u0), n))
-		u[:,0] = u0
-
-		for i in range(n - 1):
-			u[:,i + 1] = u[:,i] + self(0, u[:,i]) * dt
+		# use scipys integrate.solve_ivp to
+		u = solve_ivp((self), (t0, T), u0, method="Radau", t_eval=t, atol=(1e-05), rtol=1e-07).y
 
 		return t, np.transpose(u)
 
