@@ -1,3 +1,7 @@
+import numpy as np
+import sys, os
+import matplotlib.pyplot as plt
+
 def have_internet():
     try:
         import httplib
@@ -25,3 +29,12 @@ def my_imports():
         "7_Landing",
     ]
     return dirs
+
+def show(f=False):
+    if f:
+        return plt.show()
+
+    elif "show" in sys.argv:
+        return plt.show()
+    else:
+        return plt.clf()
