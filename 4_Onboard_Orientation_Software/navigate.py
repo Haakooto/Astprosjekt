@@ -51,22 +51,30 @@ if phi1 > phi2:
 else:
 	v = 1/np.sin(phi2-phi1)*np.asarray([np.sin(phi2)*u[0] - np.sin(phi1)*u[1], - np.cos(phi2)*u[0] + np.cos(phi1)*u[1]])
 
+
 dt = 1E-3
 
 r = mission.measure_distances()
 m = np.argsort(r)
-print(m)
 T = Volcano.time/const.yr/dt/system.one_year
 system.differential_orbits(20,dt)
-pos = system.d_pos[:,:,int(T)]
+spos = np.zeros((2,8))
+spos[:,:7] = system.d_pos[:,:,int(T)]
 
+N = 1000
 angle = np.linspace(0,2*np.pi,N)
-for i in range(8):
-	if m[i] == 7:
-		circle = r[7]*np.asarray([np.cos(angle),np.sin(angle)])
+def plot_circles(N_circles):
+	for i in range(N_circles):
+		circle = np.transpose(np.asarray([spos[:,m[i]]]*N)) + r[m[i]]*np.asarray([np.cos(angle), np.sin(angle)])
 		plt.plot(circle[0],circle[1])
-	else:
-		circle = np.transpose(np.asarray([pos[:,m[i]]]*N)) + r[m[i]]*np.asarray([np.cos(angle), np.sin(angle)])
-		plt.plot(circle[0],circle[1])
+	plt.show()
 
-plt.show()
+circle1, circle2, circle3 = [np.asarray([spos[:,m[i]]]*N) + np.transpose(r[m[i]]*np.asarray([np.cos(angle), np.sin(angle)])) for i in range(1,4)]
+for p in circle1:
+	for q in circle2:
+		if np.linalg.norm(p-q) < 2.5e-4:
+			for s in circle3:
+				if np.linalg.norm(p-s) < 5e-4:
+					print(s)
+					plt.scatter(s[0], s[1])
+plot_circles(3)
