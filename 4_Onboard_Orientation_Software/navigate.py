@@ -23,12 +23,11 @@ from ast2000tools.solar_system import SolarSystem
 util.check_for_newer_version()
 
 seed = util.get_seed("haakooto")
-system = SolarSystem(seed)
+system = SolarSys(seed)
 
 Volcano = Rocket(*rocket_build())
 Epstein = Engine()
 
-orbits = SolarSys(seed)
 
 Epstein.build(*engine_build())
 Volcano.assemble(*asseble(Epstein))
@@ -56,5 +55,6 @@ dt = 1E-3
 
 r = mission.measure_distances()
 m = np.argsort(r)[:3]
-T = Volcano.time/const.yr
-#orbits.long_run(20,dt)
+T = Volcano.time/const.yr/dt/system.one_year
+system.differential_orbits(20,dt)
+pos = system.d_pos[:][:][int(T)]
