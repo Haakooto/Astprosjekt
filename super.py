@@ -5,33 +5,28 @@ all kode er egenskrevet
 
 """
 
+# general imports
 import numpy as np
 import matplotlib.pyplot as plt
 import sys, os
 import time
-import requests
-import urllib
 
+# special imports
 import ast2000tools.constants as const
 import ast2000tools.utils as util
-from ast2000tools.space_mission import SpaceMission
-
+import ast2000tools.space_mission as SM
 import our_utilities as ot
+# import status_mesages as msg
 
+# add our package to importlist
 for odir in ot.my_imports():
     sys.path.append(os.path.abspath(odir))
-# sys.path.append(os.path.abspath("2_Planetary_Orbits"))
-# sys.path.append(os.path.abspath("3_Habitable_zone"))
-# sys.path.append(os.path.abspath("4_Onboard_Orientation_Software"))
-# sys.path.append(os.path.abspath("5_Satellite_Launch"))
-# sys.path.append(os.path.abspath("6_Preparing_for_Landing"))
-# sys.path.append(os.path.abspath("7_Landing"))
 
-import launch
-import orbits, two_body_system, n_body_system, data_analysis
-import habitable_zone
-import angular_orientation  # , navigate
-
+# import our files, preferebly using existing conventions
+import launch as L_1, rocket as R_1, engine as E_1
+import orbits as O_2, two_body_system as T_2, n_body_system as N_2, data_analysis as D_2
+import habitable_zone as H_3
+import angular_orientation as A_4  # , navigate as N_4 # navigate is currently not equiped with if name == main and is messy
 # import file5
 # import file6
 # import file7
@@ -42,4 +37,25 @@ if ot.have_internet():
     util.check_for_newer_version()
 
 
-print("hi")
+seed = 76117
+
+system = O_2.SolarSys(seed, has_moons = False)
+mission = SM.SpaceMission(seed, has_moons = False)
+
+
+Volcano = R_1.Rocket(*L_1.rocket_build())
+Epstein = E_1.Engine()
+
+Epstein.build(*L_1.engine_build())
+Volcano.assemble(*L_1.asseble(Epstein))
+
+Volcano.launch()
+
+L_1.verify(mission, system, Volcano, Epstein)
+print()
+
+
+system.differential_orbits(20, 1e-4)
+system.verify_planet_positions(20 * system.one_year, system.d_pos)
+
+
