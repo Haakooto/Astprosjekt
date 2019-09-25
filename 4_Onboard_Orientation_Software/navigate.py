@@ -20,8 +20,6 @@ from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
 
-util.check_for_newer_version()
-
 seed = util.get_seed("haakooto")
 system = SolarSys(seed)
 

@@ -17,8 +17,6 @@ import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
-# util.check_for_newer_version()
-
 def thph_to_xy(theta, phi, th0=np.pi/2, ph0=0):
 	kappa_ = 1 + cos(th0) * cos(theta) + sin(th0) * sin(theta) * cos(phi - ph0)
 	kappa = 2 / kappa_

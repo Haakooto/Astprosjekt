@@ -15,8 +15,6 @@ import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
-util.check_for_newer_version()
-
 
 class SolarSys(SolarSystem):
 	def __init__(self, seed, data_path=None, has_moons=True, verbose=True):
