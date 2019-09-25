@@ -207,11 +207,11 @@ if __name__ == "__main__":
 	seed = util.get_seed("haakooto")
 
 	# system = SolarSys(76117)
-	system = SolarSys(18116)
-	# system = SolarSys(seed)
+	# system = SolarSys(18116)
+	system = SolarSys(seed)
 
-	years = 50
-	dt = 1e-3
+	years = 300
+	dt = 1e-4
 
 	# print(np.linalg.norm(system.initial_positions, axis=0))
 
@@ -227,11 +227,18 @@ if __name__ == "__main__":
 	# system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
 	# system.t = np.linspace(0, years * system.one_year, len(system.d_pos[0][0]))
 
-	system.differential_orbits(years, dt)
+	import time
 
-	system.plot_orbits(d=True)
-	system.animate_orbits()
+	timer = time.time()
+	system.differential_orbits(years, dt)
+	t1 = time.time() - timer
+	print(f"our time: {t1}")
+	timer = time.time()
+
+	# system.plot_orbits(d=True)
+	# system.animate_orbits()
 	# np.save(f"pos_{years}yr", system.d_pos)
 
-	# system.verify_planet_positions(years * system.one_year, system.d_pos)
+	system.verify_planet_positions(years * system.one_year, system.d_pos)
+	print(f"their time: {(time.time() - timer)}")
 	# system.generate_orbit_video(system.t, system.d_pos)
