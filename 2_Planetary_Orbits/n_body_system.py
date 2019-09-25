@@ -96,6 +96,7 @@ class SolarSys(SolarSystem):
 		noise = np.random.normal(0, 0.2 * xvel.max(), len(xvel))
 		V = 1444
 		self.vnoise = xvel + noise + V
+		self.nonoise = xvel
 
 		plt.plot(self.time, self.vnoise)
 		plt.show()
@@ -129,8 +130,11 @@ class SolarSys(SolarSystem):
 		plt.show()
 
 	def assemble_data(self):
-		data = np.concatenate(([self.vnoise], [self.time]))
-		np.save("radial_velocity_curve_multiple.npy", data)
+		data = np.concatenate(([self.time], [self.vnoise]))
+		np.save("npys/radial_velocity_curve_multiple.npy", data)
+
+		data = np.concatenate(([self.time], [self.nonoise]))
+		np.save("npys/nonoise_rad_vel_multiple.npy", data)
 
 	def animate_orbits(self):
 		from matplotlib.animation import FuncAnimation
@@ -179,11 +183,11 @@ if __name__ == "__main__":
 	dt = 1e-3
 
 	system.N_body_system(yrs, dt)
-	print(system.time)
+	# print(system.time)
 	# print(time.time() - timer)
 	# system.plot_n_pos()
 	# system.energy_conserve()
-	system.animate_orbits()
+	# system.animate_orbits()
 	system.radial_vel(i=2 * np.pi / 3)
 
 	# system.assemble_data()
@@ -193,6 +197,6 @@ if __name__ == "__main__":
 	# times = system.time
 	# data = system.vnoise
 
-	# data = np.load("npys/radial_velocity_curve_multiple.npy")
-	# plt.plot(data[1], data[0])
+	# data = np.load("npys/nonoise_rad_vel_multiple.npy")
+	# plt.plot(data[0], data[1])
 	# plt.show()
