@@ -3,81 +3,78 @@ Program for importere ast og lage grunnlag for de fleste program
 
 All kode er egenskrevet
 """
-
-import numpy as np
-from numpy import cos, sin
 import sys, os
+sys.path.append(os.path.abspath("../1_the_Rocket_Engine"))
+sys.path.append(os.path.abspath("../2_Planetary_Orbits"))
+sys.path.append(os.path.abspath("../3_Habitable_zone"))
+
+from launch import *
+from orbits import SolarSys
+import numpy as np
 import matplotlib.pyplot as plt
+
 
 import ast2000tools.utils as util
 import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
+
 util.check_for_newer_version()
 
+seed = util.get_seed("haakooto")
+system = SolarSys(seed)
+
+Volcano = Rocket(*rocket_build())
+Epstein = Engine()
 
 
-def thph_to_xy(theta, phi, th0, ph0):
-	kappa_ = 1 + cos(th0) * cos(theta) + sin(th0) * sin(theta) * cos(phi - ph0)
-	kappa = 2 / kappa_
+Epstein.build(*engine_build())
+Volcano.assemble(*asseble(Epstein))
 
-	x = kappa * sin(theta) * sin(phi - ph0)
-	y = kappa * (sin(th0) * cos(theta) - cos(th0) * sin(theta) * cos(phi - ph0))
+Volcano.launch()
 
-	return x, y
-
-def xy_to_thph(x, y, th0, ph0):
-	rho = np.sqrt(x ** 2 - y ** 2)
-	beta = 2 * np.arctan(rho / 2)
-
-	theta = th0 - np.arcsin(cos(beta) * cos(th0) + y / rho * sin(beta) * sin(th0))
-	phi = ph0 + np.arctan(x * sin(beta) / (rho * sin(th0) * cos(beta) - y * cos(th0) * sin(beta)))
-
-	return theta, phi
-
-def measure_dists(time):
-	set_pos = np.array([[0.5, 0.5]])
-
-	# planet_pos = np.concatenate((np.random.randint(-5, 4, (2, 7)) + np.random.random((2, 7)), np.zeros((2, 1))), axis=1)
-	planet_pos = np.transpose([[1, 1], [0, 1], [1, 0], [-1, -1], [0, -1], [-1, 0], [0, 0]])
-
-	distances = np.linalg.norm(set_pos.T - planet_pos, axis = 0)
-
-	return distances, planet_pos
-
-def position(time):
-	distances = measure_dists(time)[0]
-	# Xp, Yp = pos[time]
-	Xp, Yp = measure_dists(time)[1]
-	#distances = np.random.randint(0, 9, (8, 2)) + np.random.random((8, 2))
-
-	grid = np.linspace(-1.5, 1.5, 100)
-	X, Y = np.meshgrid(grid, grid)
-	tol = 1
-	x, y = np.where(abs(X ** 2 + Y ** 2 - distances[-1]) < tol)
-
-	# for p in range(system.number_of_planets):
-	for p in range(7):
-		x = np.where(abs((x - Xp[p]) ** 2 - (y - Yp[p]) ** 2) < tol, x)
-		print(x)
-
-	print(x)
+mission = verify(Volcano, Epstein)
 
 
+phi1, phi2 = util.deg_to_rad(mission.star_direction_angles)
+u1hat = np.asarray([np.cos(phi1),np.sin(phi1)])
+u2hat = np.asarray([np.cos(phi2),np.sin(phi2)])
+
+lamda = mission.reference_wavelength
+lamda0 = np.asarray([lamda]*2)
+dlamda = np.asarray(mission.measure_star_doppler_shifts()) - np.asarray(mission.star_doppler_shifts_at_sun)
+u = const.c*dlamda/lamda0
+
+if phi1 > phi2:
+	v = 1/np.sin(phi1-phi2)*np.asarray([np.sin(phi2)*u[0] - np.sin(phi1)*u[1], - np.cos(phi2)*u[0] + np.cos(phi1)*u[1]])
+else:
+	v = 1/np.sin(phi2-phi1)*np.asarray([np.sin(phi2)*u[0] - np.sin(phi1)*u[1], - np.cos(phi2)*u[0] + np.cos(phi1)*u[1]])
 
 
-if __name__ == "__main__":
-	# seed = util.get_seed(76117)
+dt = 1E-3
 
-	position(0)
-	# positions = np.concatenate((np.random.randint(-5, 4, (2, 7)) + np.random.random((2, 7)), np.zeros((2, 1)), np.transpose([[np.pi, -np.pi]])), axis=1)
-	# plt.scatter(*positions)
-	# plt.axis([-5, 5, -5, 5])
-	# plt.show()
+r = mission.measure_distances()
+m = np.argsort(r)
+T = Volcano.time/const.yr/dt/system.one_year
+system.differential_orbits(20,dt)
+spos = np.zeros((2,8))
+spos[:,:7] = system.d_pos[:,:,int(T)]
 
+N = 1000
+angle = np.linspace(0,2*np.pi,N)
+def plot_circles(N_circles):
+	for i in range(N_circles):
+		circle = np.transpose(np.asarray([spos[:,m[i]]]*N)) + r[m[i]]*np.asarray([np.cos(angle), np.sin(angle)])
+		plt.plot(circle[0],circle[1])
+	plt.show()
 
-	# theta, phi = angular_orient(picture)
-	# vx, vy = velocity(lambda 1, lambda2)
-	# x, y = position(distances, time)
-	# x, y = distances(time)
+circle1, circle2, circle3 = [np.asarray([spos[:,m[i]]]*N) + np.transpose(r[m[i]]*np.asarray([np.cos(angle), np.sin(angle)])) for i in range(1,4)]
+for p in circle1:
+	for q in circle2:
+		if np.linalg.norm(p-q) < 2.5e-4:
+			for s in circle3:
+				if np.linalg.norm(p-s) < 5e-4:
+					print(s)
+					plt.scatter(s[0], s[1])
+plot_circles(3)
