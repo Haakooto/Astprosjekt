@@ -10,7 +10,8 @@ import sys, os
 
 
 class Rocket:
-	def __init__(self, m0, r0, M, dt, sT=0):
+	def __init__(self, m0, r0, M, dt, sT=0, verbose=True):
+		print("Build rocket")
 		self.mass = m0  # rocket drymass
 		self.r = r0  # rocket position
 		self.R = r0  # planet radius
@@ -20,14 +21,16 @@ class Rocket:
 		self.v = 0  # initial velocity
 		self.time = sT  # start time
 
+		self.verb = verbose
+
 	def assemble(self, engine, fuel_mass, N_engines):
 		self.engine = engine
 		self.fuel = fuel_mass
 		self.Ne = N_engines
 
 	def launch(self):
-
-		self.launch_sequence()
+		if self.verb:
+			self.launch_sequence()
 		self.engine.ignite()
 
 		self.thrust = self.engine.thrust * self.Ne
@@ -56,7 +59,8 @@ class Rocket:
 				# Rapid Unschedules Disassembly in Low Atmospheric Orbit
 				break
 
-		self.statusrapport()
+		if self.verb:
+			self.statusrapport()
 
 	def escaped(self):
 		ke = 0.5 * self.v ** 2
@@ -77,4 +81,18 @@ class Rocket:
 			sys.exit()
 
 	def launch_sequence(self):
+		# import time
+
+		# print("Starting launch procedure")
+		# time.sleep(2)
+
+		# print("T-:")
+		# for i in range(10, 0, -1):
+		# 	print(i, "...", end=" ")
+		# 	# for _ in range(3):
+		# 	# 	time.sleep(0.3)
+		# 	# 	print(".", end=" ")
+		# 	time.sleep(1)
+		# 	print("  ", end=" ")
+		# print()
 		pass
