@@ -11,19 +11,18 @@ import sys, os
 from engine import Engine
 from rocket import Rocket
 
+sys.path.append(os.path.abspath("../2_Planetary_Orbits"))
+
 import ast2000tools.utils as util
 import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
-from ast2000tools.solar_system import SolarSystem
+from orbits import SolarSys
 
-# util.check_for_newer_version()
-
-np.random.seed(14441111)
-seed = util.get_seed("haakooto")
+seed = 76117
 
 mission = SpaceMission(seed)
-system = SolarSystem(seed)
-
+system = SolarSys(seed)
+dummy_system = SolarSys(seed)
 
 # Variables for engine
 N = int(1e5)  # number of particles
@@ -64,18 +63,20 @@ def do_launch():
 	return Volcano, Epstein
 
 
-def verify(mission, system, rocket, engine):
+def verify(mission, system, rocket, engine, site=np.pi, T0=0):
+	# T0 is given in laconia years
 
 	thrust = engine.thrust  # thrust pr box
 	dm = engine.consume  # mass loss rate
 	fuel = fuel_load  # loaded fuel
 	T1 = rocket.time  # launch duration
-	planet_pos = system.initial_positions[:, 0]
 
-	launch_site = np.pi		#angle of launch site on the equator [0,2pi]
+	planet_pos = system.d_pos[system.time[-1], 0, :]
+
+	launch_site = site		#angle of launch site on the equator [0,2pi]
 	pos_x = planet_pos[0] + R*np.cos(launch_site) / const.AU  # x-position relative to star
 	pos_y = planet_pos[1] + R*np.sin(launch_site)/const.AU	# y-position relative to star
-	T0 = 0  # start of launch
+	T0 = system.year_convert_to(T0, "E")  # start of launch in earth years
 
 	verify = [thrust, dm, Ne, fuel, T1, (pos_x, pos_y), T0]
 
@@ -98,5 +99,10 @@ def verify(mission, system, rocket, engine):
 
 
 if __name__ == "__main__":
+	years = 0
+	dt = 1e-3
+
+	dummy_system.differential_orbits(years, dt)
+
 	rocket, engine = do_launch()
-	verify(rocket, engine)
+	verify(mission, dummy_system, rocket, engine, T0=years)
