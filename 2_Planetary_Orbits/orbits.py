@@ -62,7 +62,6 @@ class SolarSys(SolarSystem):
 			r0 = self.initial_positions
 
 		T = self.year_convert_to(yrs, "E") # yrs is in Laconia years, T is earth years
-		print(self.one_year * yrs, self.one_year / yrs)
 		dt = self.one_year * dt_pr_yr
 		self.time = np.linspace(0, T, int(T / dt))
 
