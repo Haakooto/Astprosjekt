@@ -40,6 +40,7 @@ class Engine:
 		self.m = 0  # maximum particle distance from centre of box
 
 	def ignite(self):
+		print("Engine ignited", end="\n\n")
 
 		for t in range(self.ts):
 
