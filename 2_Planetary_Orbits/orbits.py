@@ -61,9 +61,10 @@ class SolarSys(SolarSystem):
 		else:
 			r0 = self.initial_positions
 
-			T = self.year_convert_to(yrs, "L") # yrs is in Laconia years, T is earth years
-			dt = self.one_year * dt_pr_yr
-			self.time = np.linspace(0, T, int(T / dt))
+		T = self.year_convert_to(yrs, "E") # yrs is in Laconia years, T is earth years
+		print(self.one_year * yrs, self.one_year / yrs)
+		dt = self.one_year * dt_pr_yr
+		self.time = np.linspace(0, T, int(T / dt))
 
 
 		if T != 0:
@@ -227,11 +228,11 @@ class SolarSys(SolarSystem):
 
 
 if __name__ == "__main__":
-	seed = util.get_seed("haakooto")
+	# seed = util.get_seed("haakooto")
 
-	# system = SolarSys(76117)
+	system = SolarSys(76117)
 	# system = SolarSys(18116)
-	system = SolarSys(seed)
+	# system = SolarSys(seed)
 
 	years = 1000
 	dt = 1e-3
@@ -250,18 +251,18 @@ if __name__ == "__main__":
 	# system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
 	# system.t = np.linspace(0, years * system.one_year, len(system.d_pos[0][0]))
 
-	# import time
+	import time
 
-	# timer = time.time()
+	timer = time.time()
 	system.differential_orbits(years, dt)
-	# t1 = time.time() - timer
-	# print(f"time {years}: {t1}")
+	t1 = time.time() - timer
+	print(f"time {years}: {t1}")
 	# timer = time.time()
 
 	# system.plot_orbits(d=True)
 	# system.animate_orbits()
 	# np.save(f"npys/pos_{years}yr", system.d_pos)
 
-	system.verify_planet_positions(years * system.one_year, system.d_pos)
+	# system.verify_planet_positions(years * system.one_year, system.d_pos)
 	# print(f"their time: {(time.time() - timer)}")
 	# system.generate_orbit_video(system.t, system.d_pos)
