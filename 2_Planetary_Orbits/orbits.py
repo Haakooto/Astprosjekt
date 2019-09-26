@@ -29,6 +29,15 @@ class SolarSys(SolarSystem):
 			np.argsort(np.linalg.norm(self.initial_positions, axis=0))
 		)
 
+	def year_convert_to(self, T, planet="L"):
+		# converts to the specified planet, if L: from earth to Laconia, if E other way
+		if planet == "L":
+			return T / self.one_year
+		elif planet == "E":
+			return T * self.one_year
+		else:
+			raise AttributeError ("unknown planet used in year conversion")
+
 	def analytical_orbits(self):
 		p = 10000
 		N = self.number_of_planets
@@ -52,26 +61,33 @@ class SolarSys(SolarSystem):
 		else:
 			r0 = self.initial_positions
 
-		T = self.one_year * yrs
-		dt = self.one_year * dt_pr_yr
+			T = self.year_convert_to(yrs, "L") # yrs is in Laconia years, T is earth years
+			dt = self.one_year * dt_pr_yr
+			self.time = np.linspace(0, T, int(T / dt))
 
-		e = self.eccentricities
-		a = self.semi_major_axes
-		omega = self.aphelion_angles + np.pi
-		h = self.spin
 
-		start_angle = np.arctan(r0[1] / r0[0])
-		start_angle = np.where(r0[0] >= 0, start_angle, start_angle + np.pi)
+		if T != 0:
+			e = self.eccentricities
+			a = self.semi_major_axes
+			omega = self.aphelion_angles + np.pi
+			h = self.spin
 
-		orbits = Deq(a, e, h, omega)
-		t, u = orbits.solve(start_angle, T, dt)
+			start_angle = np.arctan(r0[1] / r0[0])
+			start_angle = np.where(r0[0] >= 0, start_angle, start_angle + np.pi)
 
-		R = a * (1 - e ** 2) / (1 + e * np.cos(u - omega))
+			orbits = Deq(a, e, h, omega)
+			t, u = orbits.solve(start_angle, T, dt)
 
-		x = R * np.cos(u)
-		y = R * np.sin(u)
+			R = a * (1 - e ** 2) / (1 + e * np.cos(u - omega))
 
-		self.d_pos = np.transpose([x, y], (0, 2, 1))
+			x = R * np.cos(u)
+			y = R * np.sin(u)
+
+			self.d_pos = np.transpose([x, y], (0, 2, 1))
+
+		else:
+			self.time = np.zeros((1), dtype=int)
+			self.d_pos = np.array([self.initial_positions.T])
 
 	def iterated_orbits(self, yrs, dt_pr_yr):
 		def accelerate(r):
@@ -143,7 +159,7 @@ class SolarSys(SolarSystem):
 		plt.show()
 
 	def animate_orbits(self):
-		from matplotlib.animation import FuncAnimation
+		from matplotlib.animation import FuncAnimation, FFMpegWriter
 
 		fig = plt.figure()
 
@@ -154,6 +170,7 @@ class SolarSys(SolarSystem):
 		plt.axis((-xmax, xmax, -xmax, xmax))
 
 		# Make an "empty" plot object to be updated throughout the animation
+		# self.positions = [plt.plot([], [], "o", lw=1)[0] for _ in range(self.number_of_planets)]
 		self.positions, = plt.plot([], [], "o", lw=1)
 		# print(self.d_pos[0, :, 100-0:100+1])
 		# print(*np.vsplit(self.d_pos[0, :, 100-10:100+1], 1)[0])
@@ -168,8 +185,16 @@ class SolarSys(SolarSystem):
 			save_count=100,
 		)
 
+		# plt.legend(loc=1)
+		# FFWriter = FFMpegWriter()
+		# self.animation.save("20yr_orbits.mp4", writer=FFWriter)
+		plt.show()
+
 	def _next_frame(self, i):
 		self.positions.set_data((0, *self.d_pos[0, :, i]), (0, *self.d_pos[1, :, i]))
+		self.positions.set_label(("p1", "p2", "p3"))
+		# for p, pos in enumerate(self.positions):
+			# pos.set_label(f"planet {p}")
 
 		return (self.positions,)
 
@@ -208,8 +233,8 @@ if __name__ == "__main__":
 	# system = SolarSys(18116)
 	system = SolarSys(seed)
 
-	years = 300
-	dt = 1e-4
+	years = 1000
+	dt = 1e-3
 
 	# print(np.linalg.norm(system.initial_positions, axis=0))
 
@@ -225,18 +250,18 @@ if __name__ == "__main__":
 	# system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
 	# system.t = np.linspace(0, years * system.one_year, len(system.d_pos[0][0]))
 
-	import time
+	# import time
 
-	timer = time.time()
+	# timer = time.time()
 	system.differential_orbits(years, dt)
-	t1 = time.time() - timer
-	print(f"our time: {t1}")
-	timer = time.time()
+	# t1 = time.time() - timer
+	# print(f"time {years}: {t1}")
+	# timer = time.time()
 
 	# system.plot_orbits(d=True)
 	# system.animate_orbits()
-	# np.save(f"pos_{years}yr", system.d_pos)
+	# np.save(f"npys/pos_{years}yr", system.d_pos)
 
 	system.verify_planet_positions(years * system.one_year, system.d_pos)
-	print(f"their time: {(time.time() - timer)}")
+	# print(f"their time: {(time.time() - timer)}")
 	# system.generate_orbit_video(system.t, system.d_pos)
