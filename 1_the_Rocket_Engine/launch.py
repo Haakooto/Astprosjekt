@@ -19,10 +19,10 @@ from ast2000tools.space_mission import SpaceMission
 from orbits import SolarSys
 
 seed = 76117
+path = "."
 
-mission = SpaceMission(seed)
-system = SolarSys(seed)
-dummy_system = SolarSys(seed)
+mission = SpaceMission(seed, path, False, True)
+system = SolarSys(seed, path, False, True)
 
 # Variables for engine
 N = int(1e5)  # number of particles
@@ -47,9 +47,10 @@ fuel_load = 50000
 # tobiasob: throttle = 4, fuel = 136000
 
 # Packages to build rocket and engine
-engine_build = lambda : [N, nozzle, T, L, dt_e, ts]
-rocket_build = lambda : [mass, R, M, dt_r]
+engine_build = lambda: [N, nozzle, T, L, dt_e, ts]
+rocket_build = lambda: [mass, R, M, dt_r]
 asseble = lambda engine: [engine, fuel_load, Ne]
+
 
 def do_launch():
 	Volcano = Rocket(*rocket_build())
@@ -63,7 +64,8 @@ def do_launch():
 	return Volcano, Epstein
 
 
-def verify(mission, system, rocket, engine, site=np.pi, T0=0):
+def change_reference(mission, system, rocket, engine, site=0, T0=0):
+	# site is angle in star reference, 0 is along x-axis
 	# T0 is given in laconia years
 
 	thrust = engine.thrust  # thrust pr box
@@ -71,38 +73,63 @@ def verify(mission, system, rocket, engine, site=np.pi, T0=0):
 	fuel = fuel_load  # loaded fuel
 	T1 = rocket.time  # launch duration
 
-	planet_pos = system.d_pos[system.time[-1], 0, :]
+	time_idx = np.argmin(abs(system.time - system.year_convert_to(T0, "E"))) - 1
+	T0 = system.time[time_idx]
+	# make time equal actual time in system
 
-	launch_site = site		#angle of launch site on the equator [0,2pi]
-	pos_x = planet_pos[0] + R*np.cos(launch_site) / const.AU  # x-position relative to star
-	pos_y = planet_pos[1] + R*np.sin(launch_site)/const.AU	# y-position relative to star
-	T0 = system.year_convert_to(T0, "E")  # start of launch in earth years
+	if T0 == 0:
+		planet_pos = system.initial_positions[:, 0]
+		planet_vel = system.initial_velocities[:, 0]
+	else:
+		planet_pos = system.d_pos[:, 0, time_idx]
+		planet_vel = (
+			system.d_pos[:, 0, time_idx] - system.d_pos[:, 0, time_idx - 1]
+		) / (system.time[1])
+	# Find position and vel of planet after launch
 
-	verify = [thrust, dm, Ne, fuel, T1, (pos_x, pos_y), T0]
+	launch_site = site  # angle of launch site on the equator [0,2pi]
+	pos_x = (
+		planet_pos[0] + R * np.cos(launch_site) / const.AU
+	)  # x-position relative to star as if T0 = 0
+	pos_y = (
+		planet_pos[1] + R * np.sin(launch_site) / const.AU
+	)  # y-position relative to star as if T0 = 0
 
-	mission.set_launch_parameters(*verify)
-	mission.launch_rocket()
+	params = [thrust, dm, Ne, fuel, T1, (pos_x, pos_y), T0]
 
-	orb_speed = system.initial_velocities[:, 0] / const.yr
-	abs_rot_speed = 2 * np.pi * R / (system.rotational_periods[0] * const.day * const.AU)
-	rot_speed = np.asarray(
-		[-np.sin(launch_site)*abs_rot_speed, np.cos(launch_site) * abs_rot_speed]
+	orb_speed = planet_vel / const.yr  # planet velocity around star
+	abs_rot_speed = (
+		2 * np.pi * R / (system.rotational_periods[0] * const.day * const.AU)
 	)
+	rot_speed = np.asarray(
+		[-np.sin(launch_site) * abs_rot_speed, np.cos(launch_site) * abs_rot_speed]
+	)  # surface velocity around planet
+
 	final_position = (
-		np.asarray([planet_pos[0] + np.cos(launch_site) * rocket.r / const.AU, planet_pos[1] + np.sin(launch_site) * rocket.r / const.AU])
+		np.asarray(
+			[
+				planet_pos[0] + np.cos(launch_site) * rocket.r / const.AU,
+				planet_pos[1] + np.sin(launch_site) * rocket.r / const.AU,
+			]
+		)
 		+ orb_speed * T1
 		+ rot_speed * T1
-	)
-	print(final_position)
+	)  # Do launch as if T0 = 0, then shift position with planet as T0 = T
 
+	mission.set_launch_parameters(*params)
+	mission.launch_rocket()
 	mission.verify_launch_result(final_position)
 
 
 if __name__ == "__main__":
-	years = 0
-	dt = 1e-3
+	dummy_system = SolarSys(seed)
+	years = 25
+	dt = 1e-5
 
+	# dummy_system.time, dummy_system.d_pos = np.load("planet_trajectories.npy", allow_pickle=True)
 	dummy_system.differential_orbits(years, dt)
 
-	rocket, engine = do_launch()
-	verify(mission, dummy_system, rocket, engine, T0=years)
+	Volcano, Epstein = do_launch()
+	change_reference(
+		mission, dummy_system, Volcano, Epstein, site=np.pi * 3 / 4, T0=years
+	)
