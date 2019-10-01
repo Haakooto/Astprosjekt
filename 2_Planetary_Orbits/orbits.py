@@ -36,7 +36,7 @@ class SolarSys(SolarSystem):
 		elif planet == "E":
 			return T * self.one_year
 		else:
-			raise AttributeError ("unknown planet used in year conversion")
+			raise AttributeError("unknown planet used in year conversion")
 
 	def analytical_orbits(self):
 		p = 10000
@@ -64,7 +64,6 @@ class SolarSys(SolarSystem):
 		T = self.year_convert_to(yrs, "E") # yrs is in Laconia years, T is earth years
 		dt = self.one_year * dt_pr_yr
 		self.time = np.linspace(0, T, int(T / dt))
-
 
 		if T != 0:
 			e = self.eccentricities
@@ -193,8 +192,6 @@ class SolarSys(SolarSystem):
 	def _next_frame(self, i):
 		self.positions.set_data((0, *self.d_pos[0, :, i]), (0, *self.d_pos[1, :, i]))
 		self.positions.set_label(("p1", "p2", "p3"))
-		# for p, pos in enumerate(self.positions):
-			# pos.set_label(f"planet {p}")
 
 		return (self.positions,)
 
@@ -233,8 +230,8 @@ if __name__ == "__main__":
 	# system = SolarSys(18116)
 	# system = SolarSys(seed)
 
-	years = 1000
-	dt = 1e-3
+	years = 100
+	dt = 1e-4
 
 	# print(np.linalg.norm(system.initial_positions, axis=0))
 
@@ -250,18 +247,18 @@ if __name__ == "__main__":
 	# system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
 	# system.t = np.linspace(0, years * system.one_year, len(system.d_pos[0][0]))
 
-	import time
+	# import time
 
-	timer = time.time()
+	# timer = time.time()
 	system.differential_orbits(years, dt)
-	t1 = time.time() - timer
-	print(f"time {years}: {t1}")
+	# t1 = time.time() - timer
+	# print(f"time {years}: {t1}")
 	# timer = time.time()
 
-	# system.plot_orbits(d=True)
-	# system.animate_orbits()
+	system.plot_orbits(d=True)
+	system.animate_orbits()
 	# np.save(f"npys/pos_{years}yr", system.d_pos)
 
-	# system.verify_planet_positions(years * system.one_year, system.d_pos)
+	system.verify_planet_positions(years * system.one_year, system.d_pos)
 	# print(f"their time: {(time.time() - timer)}")
 	# system.generate_orbit_video(system.t, system.d_pos)
