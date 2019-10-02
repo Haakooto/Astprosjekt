@@ -19,10 +19,10 @@ from ast2000tools.space_mission import SpaceMission
 from orbits import SolarSys
 
 seed = 76117
-path = "."
+path = "./../verification_data/"
 
-mission = SpaceMission(seed, path, False, True)
-system = SolarSys(seed, path, False, True)
+launch_mission = SpaceMission(seed, path, False, True)
+launch_system = SolarSys(seed, path, False, True)
 
 # Variables for engine
 N = int(1e5)  # number of particles
@@ -33,13 +33,13 @@ dt_e = 1e-12
 ts = 1000
 
 # Variables for rocket
-mass = mission.spacecraft_mass  # rocket drymass in kg
-R = system.radii[0] * 1000  # planet radius in m
-M = system.masses[0] * const.m_sun  # planet mass in kg
+mass = launch_mission.spacecraft_mass  # rocket drymass in kg
+R = launch_system.radii[0] * 1000  # planet radius in m
+M = launch_system.masses[0] * const.m_sun  # planet mass in kg
 dt_r = 0.01
 
 throttle = 1 / 12  # how much to trottle engine, must be larger than 1
-rocket_area = mission.spacecraft_area
+rocket_area = launch_mission.spacecraft_area
 Ne = rocket_area / L ** 2 * throttle  # numer of engineboxes
 fuel_load = 50000
 
@@ -122,14 +122,13 @@ def change_reference(mission, system, rocket, engine, site=0, T0=0):
 
 
 if __name__ == "__main__":
-	dummy_system = SolarSys(seed)
 	years = 25
-	dt = 1e-5
+	dt = 1e-4
 
 	# dummy_system.time, dummy_system.d_pos = np.load("planet_trajectories.npy", allow_pickle=True)
-	dummy_system.differential_orbits(years, dt)
+	launch_system.differential_orbits(years, dt)
 
 	Volcano, Epstein = do_launch()
 	change_reference(
-		mission, dummy_system, Volcano, Epstein, site=np.pi * 3 / 4, T0=years
+		launch_mission, launch_system, Volcano, Epstein, site=np.pi * 3 / 4, T0=years
 	)
