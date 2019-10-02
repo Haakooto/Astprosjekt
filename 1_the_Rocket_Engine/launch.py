@@ -73,14 +73,14 @@ def change_reference(mission, system, rocket, engine, site=0, T0=0):
 	fuel = fuel_load  # loaded fuel
 	T1 = rocket.time  # launch duration
 
-	time_idx = np.argmin(abs(system.time - system.year_convert_to(T0, "E"))) - 1
-	T0 = system.time[time_idx]
-	# make time equal actual time in system
-
 	if T0 == 0:
 		planet_pos = system.initial_positions[:, 0]
 		planet_vel = system.initial_velocities[:, 0]
+
 	else:
+		time_idx = np.argmin(abs(system.time - system.year_convert_to(T0, "E"))) - 1
+		T0 = system.time[time_idx]
+
 		planet_pos = system.d_pos[:, 0, time_idx]
 		planet_vel = (
 			system.d_pos[:, 0, time_idx] - system.d_pos[:, 0, time_idx - 1]
@@ -122,7 +122,7 @@ def change_reference(mission, system, rocket, engine, site=0, T0=0):
 
 
 if __name__ == "__main__":
-	years = 25
+	years = 25.245
 	dt = 1e-4
 
 	# dummy_system.time, dummy_system.d_pos = np.load("planet_trajectories.npy", allow_pickle=True)
@@ -130,5 +130,5 @@ if __name__ == "__main__":
 
 	Volcano, Epstein = do_launch()
 	change_reference(
-		launch_mission, launch_system, Volcano, Epstein, site=np.pi * 3 / 4, T0=years
+		launch_mission, launch_system, Volcano, Epstein, site=0, T0=years
 	)
