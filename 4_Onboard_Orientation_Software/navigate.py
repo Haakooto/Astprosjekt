@@ -63,7 +63,8 @@ def position(system, mission):
 				for s in circle3:
 					if np.linalg.norm(p-s) < 1e-3:
 						pos = s
-	return pos
+						return pos
+
 
 def navigate(system, mission, path):
 	references = np.load(f"{path}/ang_ori_refs.npy")
@@ -76,6 +77,8 @@ def navigate(system, mission, path):
 	pos = position(system, mission)
 
 	mission.verify_manual_orientation(pos, v, angle)
+
+
 
 if __name__ == "__main__":
 	seed = 76117
