@@ -62,9 +62,20 @@ def position(system, mission):
 			if np.linalg.norm(p-q) < 1e-3:
 				for s in circle3:
 					if np.linalg.norm(p-s) < 1e-3:
-						poss = s
-	return poss
+						pos = s
+	return pos
 
+def navigate(system, mission, path):
+	references = np.load(f"{path}/ang_ori_refs.npy")
+	mission.take_picture(full_sky_image_path=f"{path}/himmelkule.npy")
+	image = Image.open("sky_picture.png")
+
+
+	angle = AO.determine_angle(image, references)
+	v = velocity(mission)
+	pos = position(system, mission)
+
+	mission.verify_manual_orientation(pos, v, angle)
 
 if __name__ == "__main__":
 	seed = 76117
@@ -76,21 +87,14 @@ if __name__ == "__main__":
 	years = 30
 	dt_pr_yr = 1e-4
 
-	site = np.pi
-	launch_time = 12.3
+	site = np.pi/2
+	launch_time = 10.2
 
 	system.differential_orbits(years, dt_pr_yr)
 
 	Volcano, Epstein = launch.do_launch()
 	launch.change_reference(mission, system, Volcano, Epstein, site, launch_time)
 
-	references = np.load(f"{path}/ang_ori_refs.npy")
-	mission.take_picture()
+	navigate(system, mission, path)
 
-	image = Image.open("sky_picture.png")
-	angle = AO.determine_angle(image, references)
 
-	v = velocity(mission)
-	position = position(system, mission)
-
-	mission.verify_manual_orientation(position, v, angle)
