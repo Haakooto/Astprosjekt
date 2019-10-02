@@ -30,7 +30,7 @@ class Diff_eq:
 
 		# use scipys integrate.solve_ivp to
 		u = solve_ivp(
-			(self), (t0, T), u0, method="Radau", t_eval=t, atol=(1e-6), rtol=1e-9
+			self, (t0, T), u0, method="Radau", t_eval=t, atol=1e-7, rtol=1e-9
 		).y
 
 		return t, np.transpose(u)
