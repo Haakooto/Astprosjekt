@@ -226,7 +226,7 @@ class SolarSys(SolarSystem):
 if __name__ == "__main__":
 	# seed = util.get_seed("haakooto")
 	seed = 76117
-	path = "."
+	path = "./../verification_data"
 
 	system = SolarSys(seed, path, False, True)
 	# system = SolarSys(18116)
@@ -249,10 +249,10 @@ if __name__ == "__main__":
 	# system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
 	# system.t = np.linspace(0, years * system.one_year, len(system.d_pos[0][0]))
 
-	time, pos = np.load("planet_trajectories.npy", allow_pickle=True)
+	# time, pos = np.load("planet_trajectories.npy", allow_pickle=True)
 
-	for p in range(7):
-		plt.plot(*pos[:, p, :])
+	# for p in range(7):
+	# 	plt.plot(*pos[:, p, :])
 
 	# import time
 
@@ -262,10 +262,10 @@ if __name__ == "__main__":
 	# print(f"time {years}: {t1}")
 	# timer = time.time()
 
-	system.plot_orbits(d=True)
+	# system.plot_orbits(d=True)
 	# system.animate_orbits()
 	# np.save(f"npys/pos_{years}yr", system.d_pos)
 
-	# system.verify_planet_positions(years * system.one_year, system.d_pos, "planet_trajectories.npy")
+	system.verify_planet_positions(years * system.one_year, system.d_pos, f"{path}/planet_trajectories_{years}yr.npy")
 	# print(f"their time: {(time.time() - timer)}")
 	# system.generate_orbit_video(system.t, system.d_pos)
