@@ -63,7 +63,7 @@ class SolarSys(SolarSystem):
 
 		T = self.year_convert_to(yrs, "E") # yrs is in Laconia years, T is earth years
 		dt = self.one_year * dt_pr_yr
-		self.time = np.linspace(0, T, int(T / dt))
+		self.time = np.linspace(0, T, int(T / dt)+1)
 
 		if T != 0:
 			e = self.eccentricities
@@ -225,8 +225,10 @@ class SolarSys(SolarSystem):
 
 if __name__ == "__main__":
 	# seed = util.get_seed("haakooto")
+	seed = 76117
+	path = "."
 
-	system = SolarSys(76117)
+	system = SolarSys(seed, path, False, True)
 	# system = SolarSys(18116)
 	# system = SolarSys(seed)
 
@@ -247,6 +249,11 @@ if __name__ == "__main__":
 	# system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
 	# system.t = np.linspace(0, years * system.one_year, len(system.d_pos[0][0]))
 
+	time, pos = np.load("planet_trajectories.npy", allow_pickle=True)
+
+	for p in range(7):
+		plt.plot(*pos[:, p, :])
+
 	# import time
 
 	# timer = time.time()
@@ -256,9 +263,9 @@ if __name__ == "__main__":
 	# timer = time.time()
 
 	system.plot_orbits(d=True)
-	system.animate_orbits()
+	# system.animate_orbits()
 	# np.save(f"npys/pos_{years}yr", system.d_pos)
 
-	system.verify_planet_positions(years * system.one_year, system.d_pos)
+	# system.verify_planet_positions(years * system.one_year, system.d_pos, "planet_trajectories.npy")
 	# print(f"their time: {(time.time() - timer)}")
 	# system.generate_orbit_video(system.t, system.d_pos)
