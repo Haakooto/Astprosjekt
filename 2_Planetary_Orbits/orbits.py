@@ -3,7 +3,7 @@ Program for å finne og plotte planetposisjoner numerisk
 
 All kode er egenskrevet
 
-fil ivp.py er nødvendig for en av metodene
+fil ivp.py er nødvendig i samme mappe for en av metodene
 """
 
 import numpy as np
@@ -140,7 +140,8 @@ class SolarSys(SolarSystem):
 			if d:
 				plt.plot(*self.d_pos[:, p, :], label=f"{lab}, d")
 		if a:
-			plt.plot(*self.a_pos, "y", label="analytical")
+			plt.plot(*self.a_pos, "y")
+			plt.plot(*self.a_pos[:, 0, 0], "y", label="Analytical orbits")
 		plt.scatter(*self.initial_positions, label="init")
 		if i:
 			plt.scatter(*self.i_pos[:, :, -1], label="final i")
@@ -165,10 +166,7 @@ class SolarSys(SolarSystem):
 		plt.axis((-xmax, xmax, -xmax, xmax))
 
 		# Make an "empty" plot object to be updated throughout the animation
-		# self.positions = [plt.plot([], [], "o", lw=1)[0] for _ in range(self.number_of_planets)]
 		self.positions, = plt.plot([], [], "o", lw=1)
-		# print(self.d_pos[0, :, 100-0:100+1])
-		# print(*np.vsplit(self.d_pos[0, :, 100-10:100+1], 1)[0])
 		# Call FuncAnimation
 		self.animation = FuncAnimation(
 			fig,
@@ -180,9 +178,6 @@ class SolarSys(SolarSystem):
 			save_count=100,
 		)
 
-		# plt.legend(loc=1)
-		# FFWriter = FFMpegWriter()
-		# self.animation.save("20yr_orbits.mp4", writer=FFWriter)
 		plt.show()
 
 	def _next_frame(self, i):
@@ -201,14 +196,14 @@ if __name__ == "__main__":
 	# system = SolarSys(18116)
 	# system = SolarSys(seed)
 
-	years = 100
+	years = 10
 	dt = 1e-4
 
 	# print(np.linalg.norm(system.initial_positions, axis=0))
 
 	# system.long_run(years, dt)
 
-	# system.analytical_orbits()
+	system.analytical_orbits()
 	# system.iterated_orbits(years, dt)
 	# system.load_pos(f"pos_{years}yr.npy")
 
@@ -231,10 +226,10 @@ if __name__ == "__main__":
 	# print(f"time {years}: {t1}")
 	# timer = time.time()
 
-	# system.plot_orbits(d=True)
+	system.plot_orbits(a=True, d=True)
 	# system.animate_orbits()
 	# np.save(f"npys/pos_{years}yr", system.d_pos)
 
-	system.verify_planet_positions(years * system.one_year, system.d_pos, f"{path}/planet_trajectories_{years}yr.npy")
+	# system.verify_planet_positions(years * system.one_year, system.d_pos, f"{path}/planet_trajectories_{years}yr.npy")
 	# print(f"their time: {(time.time() - timer)}")
 	# system.generate_orbit_video(system.t, system.d_pos)
