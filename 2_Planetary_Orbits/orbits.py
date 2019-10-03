@@ -117,7 +117,7 @@ class SolarSys(SolarSystem):
 
 		self.i_pos = pos
 
-	def plot_orbits(self, a=False, i=False, d=False, o=False):
+	def plot_orbits(self, a=False, i=False, d=False):
 
 		ordered_planets = np.argsort(np.linalg.norm(self.initial_positions, axis=0))
 		planet_names = [
@@ -139,8 +139,6 @@ class SolarSys(SolarSystem):
 				plt.plot(*self.i_pos[:, p, :], "b", label=f"{lab}, i")
 			if d:
 				plt.plot(*self.d_pos[:, p, :], label=f"{lab}, d")
-			if o:
-				plt.plot(*self.pos[:, p, :], "c", label=f"{lab}, p")
 		if a:
 			plt.plot(*self.a_pos, "y", label="analytical")
 		plt.scatter(*self.initial_positions, label="init")
@@ -148,8 +146,6 @@ class SolarSys(SolarSystem):
 			plt.scatter(*self.i_pos[:, :, -1], label="final i")
 		if d:
 			plt.scatter(*self.d_pos[:, :, -1], label="final d")
-		if o:
-			plt.scatter(*self.pos[:, :, -1], label="final pos")
 		plt.scatter([0], [0], s=80, c=np.array(self.star_color) / 255)
 
 		plt.grid()
@@ -194,33 +190,6 @@ class SolarSys(SolarSystem):
 		self.positions.set_label(("p1", "p2", "p3"))
 
 		return (self.positions,)
-
-	def long_run(self, total_years, dt_pr_yr, batch_size=50):
-
-		N = total_years // batch_size
-		if total_years % batch_size != 0:
-			total_years = N * batch_size
-
-		T = self.one_year * batch_size
-
-		filename = f"pos_{total_years}yr.npy"
-
-		for n in range(N):
-			if n != 0:
-				prev_pos = np.load(filename)
-				self.r0 = prev_pos[:, :, -1]
-			else:
-				self.r0 = self.initial_positions
-
-			self.differential_orbits(batch_size, dt_pr_yr, True)
-
-			if n != 0:
-				pos = np.concatenate((prev_pos, self.d_pos), axis=2)
-			else:
-				pos = self.d_pos
-
-			np.save(filename, pos)
-			self.pos = pos
 
 
 if __name__ == "__main__":
