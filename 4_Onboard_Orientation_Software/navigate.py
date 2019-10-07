@@ -76,7 +76,8 @@ def navigate(system, mission, path):
 	v = velocity(mission)
 	pos = position(system, mission)
 
-	mission.verify_manual_orientation(pos, v, angle)
+	return [pos, v, angle]
+
 
 
 
@@ -90,14 +91,22 @@ if __name__ == "__main__":
 	years = 30
 	dt_pr_yr = 1e-4
 
-	site = np.pi/2
-	launch_time = 10.2
+	site = 0
+	launch_time = 0
 
 	system.differential_orbits(years, dt_pr_yr)
 
 	Volcano, Epstein = launch.do_launch()
 	launch.change_reference(mission, system, Volcano, Epstein, site, launch_time)
 
-	navigate(system, mission, path)
+	X = navigate(system, mission, path)
+	mission.verify_manual_orientation(*X)
+
+	print(f"Position after launch: {X[0]}AU")
+	print(f"Velocity after launch: {X[1]}AU/yr")
+	print(f"Angle after launch: {X[2]}deg")
+
+	print(mission._position_after_launch)
+	print(mission._velocity_after_launch)
 
 
