@@ -49,15 +49,14 @@ fuel_load = 50000
 # Packages to build rocket and engine
 engine_build = lambda: [N, nozzle, T, L, dt_e, ts]
 rocket_build = lambda: [mass, R, M, dt_r]
-asseble = lambda engine: [engine, fuel_load, Ne]
+parts = lambda engine: [engine, fuel_load, Ne]
 
 
 def do_launch():
 	Volcano = Rocket(*rocket_build())
-	Epstein = Engine()
+	Epstein = Engine(*engine_build())
 
-	Epstein.build(*engine_build())
-	Volcano.assemble(*asseble(Epstein))
+	Volcano.assemble(*parts(Epstein))
 
 	Volcano.launch()
 

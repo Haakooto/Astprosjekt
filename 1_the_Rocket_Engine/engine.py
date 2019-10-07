@@ -14,7 +14,7 @@ np.random.seed(14441111)
 
 
 class Engine:
-	def build(self, N_part, nozzle_size, Temp, Length, dt, ts):
+	def __init__(self, N_part, nozzle_size, Temp, Length, dt, ts):
 		# Names should be self explanatory
 		self.N = N_part
 		self.T = Temp
