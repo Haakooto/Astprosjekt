@@ -60,11 +60,12 @@ def planet_temp(system):
     for i, j in enumerate(R_p):
         if min_R < j < max_R:
             index.append(i)
-    return index
+    return surf_temp, R_p, min_R, max_R, E_lander
 
 
 if __name__ == "__main__":
     seed = util.get_seed("haakooto")
     system = SolarSystem(seed)
 
-    print(planet_temp(system))
+    surf_temp, R_p, min_R, max_R, E_lander = planet_temp(system)
+    print(E_lander)
