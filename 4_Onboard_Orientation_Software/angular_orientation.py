@@ -6,7 +6,7 @@ All kode er egenskrevet
 
 import numpy as np
 from numpy import sin, cos
-import sys, os
+import sys, os, time
 import matplotlib.pyplot as plt
 import matplotlib
 from PIL import Image
@@ -112,7 +112,7 @@ def generate_unique_id(image):
 
 	return unique_val
 
-def generate_set_ids():
+def generate_refernce_ids():
 	files = glob.glob("pngs/*.png")
 	files = np.array([file.rsplit(".", 1) for file in files])
 	files = np.array([name[0].rsplit("_", 1) for name in files])
@@ -151,23 +151,25 @@ if __name__ == "__main__":
 
 
 	# take_360_pictures()
-	# np.save("reference.npy", generate_set_ids())
+	# np.save("reference.npy", generate_refernce_ids())
 
 	reference_set = np.load("reference.npy")
 	N = 100
 	fail = 0
 
+	timer = time.time()
 	for _ in range(N):
 		img, answer = take_random_pic()
-		result = determine_angle(generate_unique_id(img), reference_set)
+		result = determine_angle(img, reference_set)
 
 		succ = abs(util.deg_to_rad(result) - answer) < np.pi/360
 
 		if not succ:
+			print(f"Angle: {result}, actual angle: {util.rad_to_deg(answer)}")
 			fail += 1
 
 	print(f"Number of fails in {N} attempts: {fail}")
-
+	print(time.time() - timer)
 
 
 
