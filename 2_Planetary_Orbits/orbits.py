@@ -3,7 +3,7 @@ Program for å finne og plotte planetposisjoner numerisk
 
 All kode er egenskrevet
 
-fil ivp.py er nødvendig for en av metodene
+fil ivp.py er nødvendig i samme mappe for en av metodene
 """
 
 import numpy as np
@@ -36,7 +36,7 @@ class SolarSys(SolarSystem):
 		elif planet == "E":
 			return T * self.one_year
 		else:
-			raise AttributeError ("unknown planet used in year conversion")
+			raise AttributeError("unknown planet used in year conversion")
 
 	def analytical_orbits(self):
 		p = 10000
@@ -63,8 +63,7 @@ class SolarSys(SolarSystem):
 
 		T = self.year_convert_to(yrs, "E") # yrs is in Laconia years, T is earth years
 		dt = self.one_year * dt_pr_yr
-		self.time = np.linspace(0, T, int(T / dt))
-
+		self.time = np.linspace(0, T, int(T / dt)+1)
 
 		if T != 0:
 			e = self.eccentricities
@@ -118,7 +117,7 @@ class SolarSys(SolarSystem):
 
 		self.i_pos = pos
 
-	def plot_orbits(self, a=False, i=False, d=False, o=False):
+	def plot_orbits(self, a=False, i=False, d=False):
 
 		ordered_planets = np.argsort(np.linalg.norm(self.initial_positions, axis=0))
 		planet_names = [
@@ -140,17 +139,14 @@ class SolarSys(SolarSystem):
 				plt.plot(*self.i_pos[:, p, :], "b", label=f"{lab}, i")
 			if d:
 				plt.plot(*self.d_pos[:, p, :], label=f"{lab}, d")
-			if o:
-				plt.plot(*self.pos[:, p, :], "c", label=f"{lab}, p")
 		if a:
-			plt.plot(*self.a_pos, "y", label="analytical")
+			plt.plot(*self.a_pos, "y")
+			plt.plot(*self.a_pos[:, 0, 0], "y", label="Analytical orbits")
 		plt.scatter(*self.initial_positions, label="init")
 		if i:
 			plt.scatter(*self.i_pos[:, :, -1], label="final i")
 		if d:
 			plt.scatter(*self.d_pos[:, :, -1], label="final d")
-		if o:
-			plt.scatter(*self.pos[:, :, -1], label="final pos")
 		plt.scatter([0], [0], s=80, c=np.array(self.star_color) / 255)
 
 		plt.grid()
@@ -170,10 +166,7 @@ class SolarSys(SolarSystem):
 		plt.axis((-xmax, xmax, -xmax, xmax))
 
 		# Make an "empty" plot object to be updated throughout the animation
-		# self.positions = [plt.plot([], [], "o", lw=1)[0] for _ in range(self.number_of_planets)]
 		self.positions, = plt.plot([], [], "o", lw=1)
-		# print(self.d_pos[0, :, 100-0:100+1])
-		# print(*np.vsplit(self.d_pos[0, :, 100-10:100+1], 1)[0])
 		# Call FuncAnimation
 		self.animation = FuncAnimation(
 			fig,
@@ -185,62 +178,32 @@ class SolarSys(SolarSystem):
 			save_count=100,
 		)
 
-		# plt.legend(loc=1)
-		# FFWriter = FFMpegWriter()
-		# self.animation.save("20yr_orbits.mp4", writer=FFWriter)
 		plt.show()
 
 	def _next_frame(self, i):
 		self.positions.set_data((0, *self.d_pos[0, :, i]), (0, *self.d_pos[1, :, i]))
 		self.positions.set_label(("p1", "p2", "p3"))
-		# for p, pos in enumerate(self.positions):
-			# pos.set_label(f"planet {p}")
 
 		return (self.positions,)
-
-	def long_run(self, total_years, dt_pr_yr, batch_size=50):
-
-		N = total_years // batch_size
-		if total_years % batch_size != 0:
-			total_years = N * batch_size
-
-		T = self.one_year * batch_size
-
-		filename = f"pos_{total_years}yr.npy"
-
-		for n in range(N):
-			if n != 0:
-				prev_pos = np.load(filename)
-				self.r0 = prev_pos[:, :, -1]
-			else:
-				self.r0 = self.initial_positions
-
-			self.differential_orbits(batch_size, dt_pr_yr, True)
-
-			if n != 0:
-				pos = np.concatenate((prev_pos, self.d_pos), axis=2)
-			else:
-				pos = self.d_pos
-
-			np.save(filename, pos)
-			self.pos = pos
 
 
 if __name__ == "__main__":
 	# seed = util.get_seed("haakooto")
+	seed = 76117
+	path = "./../verification_data"
 
-	system = SolarSys(76117)
+	system = SolarSys(seed, path, False, True)
 	# system = SolarSys(18116)
 	# system = SolarSys(seed)
 
-	years = 1000
-	dt = 1e-3
+	years = 10
+	dt = 1e-4
 
 	# print(np.linalg.norm(system.initial_positions, axis=0))
 
 	# system.long_run(years, dt)
 
-	# system.analytical_orbits()
+	system.analytical_orbits()
 	# system.iterated_orbits(years, dt)
 	# system.load_pos(f"pos_{years}yr.npy")
 
@@ -250,18 +213,23 @@ if __name__ == "__main__":
 	# system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
 	# system.t = np.linspace(0, years * system.one_year, len(system.d_pos[0][0]))
 
-	import time
+	# time, pos = np.load("planet_trajectories.npy", allow_pickle=True)
 
-	timer = time.time()
+	# for p in range(7):
+	# 	plt.plot(*pos[:, p, :])
+
+	# import time
+
+	# timer = time.time()
 	system.differential_orbits(years, dt)
-	t1 = time.time() - timer
-	print(f"time {years}: {t1}")
+	# t1 = time.time() - timer
+	# print(f"time {years}: {t1}")
 	# timer = time.time()
 
-	# system.plot_orbits(d=True)
+	system.plot_orbits(a=True, d=True)
 	# system.animate_orbits()
 	# np.save(f"npys/pos_{years}yr", system.d_pos)
 
-	# system.verify_planet_positions(years * system.one_year, system.d_pos)
+	# system.verify_planet_positions(years * system.one_year, system.d_pos, f"{path}/planet_trajectories_{years}yr.npy")
 	# print(f"their time: {(time.time() - timer)}")
 	# system.generate_orbit_video(system.t, system.d_pos)

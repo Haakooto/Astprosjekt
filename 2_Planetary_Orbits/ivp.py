@@ -26,10 +26,12 @@ class Diff_eq:
 
 	def solve(self, u0, T, dt, t0=0):
 		n = int(T / dt)
-		t = np.linspace(0, T, n)
+		t = np.linspace(0, T, n+1)
 
 		# use scipys integrate.solve_ivp to
-		u = solve_ivp((self), (t0, T), u0, method="Radau", t_eval=t, atol=(1e-05), rtol=1e-07).y
+		u = solve_ivp(
+			self, (t0, T), u0, method="Radau", t_eval=t, atol=1e-7, rtol=1e-9
+		).y
 
 		return t, np.transpose(u)
 

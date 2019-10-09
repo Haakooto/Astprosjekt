@@ -16,7 +16,6 @@ import ast2000tools.constants as const
 import ast2000tools.utils as util
 import ast2000tools.space_mission as SM
 import our_utilities as ot
-# import status_mesages as msg
 
 # add our package to importlist
 for odir in ot.my_imports():
@@ -26,7 +25,7 @@ for odir in ot.my_imports():
 import launch as L_1, rocket as R_1, engine as E_1
 import orbits as O_2, two_body_system as T_2, n_body_system as N_2, data_analysis as D_2
 import habitable_zone as H_3
-import angular_orientation as A_4  # , navigate as N_4 # navigate is currently not equiped with if name == main and is messy
+import angular_orientation as A_4, navigate as N_4
 # import file5
 # import file6
 # import file7
@@ -38,24 +37,24 @@ if ot.have_internet():
 
 
 seed = 76117
+path = "./verification_data"
 
-system = O_2.SolarSys(seed, has_moons = False)
-mission = SM.SpaceMission(seed, has_moons = False)
+system = O_2.SolarSys(seed, path, False, True)
+mission = SM.SpaceMission(seed, path, False, True)
 
+simulation_years = 20
+dt_pr_yr = 1e-4
 
-Volcano = R_1.Rocket(*L_1.rocket_build())
-Epstein = E_1.Engine()
+system.differential_orbits(simulation_years, dt_pr_yr)
+system.verify_planet_positions(simulation_years * system.one_year, system.d_pos)
 
-Epstein.build(*L_1.engine_build())
-Volcano.assemble(*L_1.asseble(Epstein))
+launch_site = 3*np.pi/7
+launch_time = 1.2932
 
-Volcano.launch()
+Volcano, Epstein = L_1.do_launch()
 
-L_1.verify(mission, system, Volcano, Epstein)
-print()
+L_1.change_reference(mission, system, Volcano, Epstein, launch_site, launch_time)
 
-
-system.differential_orbits(20, 1e-4)
-system.verify_planet_positions(20 * system.one_year, system.d_pos)
+N_4.navigate(system, mission, path)
 
 

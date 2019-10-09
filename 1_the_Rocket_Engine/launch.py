@@ -19,10 +19,10 @@ from ast2000tools.space_mission import SpaceMission
 from orbits import SolarSys
 
 seed = 76117
+path = "./../verification_data/"
 
-mission = SpaceMission(seed)
-system = SolarSys(seed)
-dummy_system = SolarSys(seed)
+launch_mission = SpaceMission(seed, path, False, True)
+launch_system = SolarSys(seed, path, False, True)
 
 # Variables for engine
 N = int(1e5)  # number of particles
@@ -33,13 +33,13 @@ dt_e = 1e-12
 ts = 1000
 
 # Variables for rocket
-mass = mission.spacecraft_mass  # rocket drymass in kg
-R = system.radii[0] * 1000  # planet radius in m
-M = system.masses[0] * const.m_sun  # planet mass in kg
+mass = launch_mission.spacecraft_mass  # rocket drymass in kg
+R = launch_system.radii[0] * 1000  # planet radius in m
+M = launch_system.masses[0] * const.m_sun  # planet mass in kg
 dt_r = 0.01
 
 throttle = 1 / 12  # how much to trottle engine, must be larger than 1
-rocket_area = mission.spacecraft_area
+rocket_area = launch_mission.spacecraft_area
 Ne = rocket_area / L ** 2 * throttle  # numer of engineboxes
 fuel_load = 50000
 
@@ -47,23 +47,24 @@ fuel_load = 50000
 # tobiasob: throttle = 4, fuel = 136000
 
 # Packages to build rocket and engine
-engine_build = lambda : [N, nozzle, T, L, dt_e, ts]
-rocket_build = lambda : [mass, R, M, dt_r]
-asseble = lambda engine: [engine, fuel_load, Ne]
+engine_build = lambda: [N, nozzle, T, L, dt_e, ts]
+rocket_build = lambda: [mass, R, M, dt_r]
+parts = lambda engine: [engine, fuel_load, Ne]
+
 
 def do_launch():
 	Volcano = Rocket(*rocket_build())
-	Epstein = Engine()
+	Epstein = Engine(*engine_build())
 
-	Epstein.build(*engine_build())
-	Volcano.assemble(*asseble(Epstein))
+	Volcano.assemble(*parts(Epstein))
 
 	Volcano.launch()
 
 	return Volcano, Epstein
 
 
-def verify(mission, system, rocket, engine, site=np.pi, T0=0):
+def change_reference(mission, system, rocket, engine, site=0, T0=0):
+	# site is angle in star reference, 0 is along x-axis
 	# T0 is given in laconia years
 
 	thrust = engine.thrust  # thrust pr box
@@ -71,38 +72,62 @@ def verify(mission, system, rocket, engine, site=np.pi, T0=0):
 	fuel = fuel_load  # loaded fuel
 	T1 = rocket.time  # launch duration
 
-	planet_pos = system.d_pos[system.time[-1], 0, :]
+	if T0 == 0:
+		planet_pos = system.initial_positions[:, 0]
+		planet_vel = system.initial_velocities[:, 0]
 
-	launch_site = site		#angle of launch site on the equator [0,2pi]
-	pos_x = planet_pos[0] + R*np.cos(launch_site) / const.AU  # x-position relative to star
-	pos_y = planet_pos[1] + R*np.sin(launch_site)/const.AU	# y-position relative to star
-	T0 = system.year_convert_to(T0, "E")  # start of launch in earth years
+	else:
+		time_idx = np.argmin(abs(system.time - system.year_convert_to(T0, "E"))) - 1
+		T0 = system.time[time_idx]
 
-	verify = [thrust, dm, Ne, fuel, T1, (pos_x, pos_y), T0]
+		planet_pos = system.d_pos[:, 0, time_idx]
+		planet_vel = (
+			system.d_pos[:, 0, time_idx] - system.d_pos[:, 0, time_idx - 1]
+		) / (system.time[1])
+	# Find position and vel of planet after launch
 
-	mission.set_launch_parameters(*verify)
-	mission.launch_rocket()
+	launch_site = site  # angle of launch site on the equator [0,2pi]
+	pos_x = (
+		planet_pos[0] + R * np.cos(launch_site) / const.AU
+	)  # x-position relative to star as if T0 = 0
+	pos_y = (
+		planet_pos[1] + R * np.sin(launch_site) / const.AU
+	)  # y-position relative to star as if T0 = 0
 
-	orb_speed = system.initial_velocities[:, 0] / const.yr
-	abs_rot_speed = 2 * np.pi * R / (system.rotational_periods[0] * const.day * const.AU)
-	rot_speed = np.asarray(
-		[-np.sin(launch_site)*abs_rot_speed, np.cos(launch_site) * abs_rot_speed]
+	params = [thrust, dm, Ne, fuel, T1, (pos_x, pos_y), T0]
+
+	orb_speed = planet_vel / const.yr  # planet velocity around star
+	abs_rot_speed = (
+		2 * np.pi * R / (system.rotational_periods[0] * const.day * const.AU)
 	)
+	rot_speed = np.asarray(
+		[-np.sin(launch_site) * abs_rot_speed, np.cos(launch_site) * abs_rot_speed]
+	)  # surface velocity around planet
+
 	final_position = (
-		np.asarray([planet_pos[0] + np.cos(launch_site) * rocket.r / const.AU, planet_pos[1] + np.sin(launch_site) * rocket.r / const.AU])
+		np.asarray(
+			[
+				planet_pos[0] + np.cos(launch_site) * rocket.r / const.AU,
+				planet_pos[1] + np.sin(launch_site) * rocket.r / const.AU,
+			]
+		)
 		+ orb_speed * T1
 		+ rot_speed * T1
-	)
-	print(final_position)
+	)  # Do launch as if T0 = 0, then shift position with planet as T0 = T
 
+	mission.set_launch_parameters(*params)
+	mission.launch_rocket()
 	mission.verify_launch_result(final_position)
 
 
 if __name__ == "__main__":
-	years = 0
-	dt = 1e-3
+	years = 25.245
+	dt = 1e-4
 
-	dummy_system.differential_orbits(years, dt)
+	# dummy_system.time, dummy_system.d_pos = np.load("planet_trajectories.npy", allow_pickle=True)
+	launch_system.differential_orbits(years, dt)
 
-	rocket, engine = do_launch()
-	verify(mission, dummy_system, rocket, engine, T0=years)
+	Volcano, Epstein = do_launch()
+	change_reference(
+		launch_mission, launch_system, Volcano, Epstein, site=0, T0=years
+	)

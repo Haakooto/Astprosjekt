@@ -129,12 +129,13 @@ def generate_set_ids():
 
 	return unique_vals
 
-def determine_angle(val, reference_set):
-	full_set = reference_set
+def determine_angle(image, reference_set):
+	pixs = np.array(image)
+	val = generate_unique_id(pixs)
 
-	residual = np.zeros(len(full_set))
+	residual = np.zeros(len(reference_set))
 
-	for i, pic in enumerate(full_set):
+	for i, pic in enumerate(reference_set):
 		residual[i] = sum((val - pic) ** 2)
 
 	return np.argmin(residual)
@@ -153,7 +154,7 @@ if __name__ == "__main__":
 	# np.save("reference.npy", generate_set_ids())
 
 	reference_set = np.load("reference.npy")
-	N = 1
+	N = 100
 	fail = 0
 
 	for _ in range(N):
