@@ -52,8 +52,8 @@ rocket_build = lambda: [mass, R, M, dt_r]
 parts = lambda engine: [engine, fuel_load, Ne]
 
 
-def do_launch():
-	Volcano = Rocket(*rocket_build())
+def do_launch(verb=True):
+	Volcano = Rocket(*rocket_build(), verbose=verb)
 	Epstein = Engine(*engine_build())
 
 	Volcano.assemble(*parts(Epstein))
@@ -86,7 +86,7 @@ def change_reference(mission, system, rocket, engine, site=0, T0=0):
 		) / (system.time[1])
 	# Find position and vel of planet after launch
 
-	launch_site = site  # angle of launch site on the equator [0,2pi]
+	launch_site = site # angle of launch site on the equator [0,2pi]
 	pos_x = (
 		planet_pos[0] + R * np.cos(launch_site) / const.AU
 	)  # x-position relative to star as if T0 = 0
