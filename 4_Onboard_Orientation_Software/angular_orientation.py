@@ -154,7 +154,7 @@ if __name__ == "__main__":
 	# np.save("reference.npy", generate_refernce_ids())
 
 	reference_set = np.load("reference.npy")
-	N = 100
+	N = 1000
 	fail = 0
 
 	timer = time.time()
