@@ -117,7 +117,7 @@ class SolarSys(SolarSystem):
 
 		self.i_pos = pos
 
-	def plot_orbits(self, a=False, i=False, d=False):
+	def plot_orbits(self, a=False, i=False, d=False, init=True, final=True):
 
 		ordered_planets = np.argsort(np.linalg.norm(self.initial_positions, axis=0))
 		planet_names = [
@@ -134,35 +134,41 @@ class SolarSys(SolarSystem):
 		]
 
 		for p in range(self.number_of_planets):
-			lab = f"{planet_names[self.ordered_planets[p]]}; nr. {self.ordered_planets[p]}"
+			lab = f"{planet_names[self.ordered_planets[p]]}"#; nr. {self.ordered_planets[p]}"
 			if i:
-				plt.plot(*self.i_pos[:, p, :], "b", label=f"{lab}, i")
+				plt.plot(*self.i_pos[:, p, :], "b", label=f"{lab}")
 			if d:
-				plt.plot(*self.d_pos[:, p, :], label=f"{lab}, d")
+				plt.plot(*self.d_pos[:, p, :], label=f"{lab}")
 		if a:
 			plt.plot(*self.a_pos, "y")
 			plt.plot(*self.a_pos[:, 0, 0], "y", label="Analytical orbits")
-		plt.scatter(*self.initial_positions, label="init")
-		if i:
-			plt.scatter(*self.i_pos[:, :, -1], label="final i")
-		if d:
-			plt.scatter(*self.d_pos[:, :, -1], label="final d")
-		plt.scatter([0], [0], s=80, c=np.array(self.star_color) / 255)
+		if init:
+			plt.scatter(*self.initial_positions, label="start")
+		if final and i:
+			plt.scatter(*self.i_pos[:, :, -1], label="final")
+		if final and d:
+			plt.scatter(*self.d_pos[:, :, -1], label="final")
+
+		plt.scatter([0], [0], s=80, c=np.array(self.star_color) / 255, label="Sun")
 
 		plt.grid()
 		plt.axis("equal")
+		plt.xlabel("x, [AU]")
+		plt.ylabel("y, [AU]")
 		plt.legend(loc=1)
-		plt.show()
+		if __name__ == "__main__":
+			plt.show()
 
-	def animate_orbits(self):
+	def animate_orbits(self, inn, ut):
 		from matplotlib.animation import FuncAnimation, FFMpegWriter
 
 		fig = plt.figure()
+		self.ani_pos = self.d_pos[:, inn:ut+1, :]
 
 		# Configure figure
 		plt.axis("equal")
 		plt.axis("off")
-		xmax = 2 * np.max(abs(self.d_pos))
+		xmax = 2 * np.max(abs(self.ani_pos))
 		plt.axis((-xmax, xmax, -xmax, xmax))
 
 		# Make an "empty" plot object to be updated throughout the animation
@@ -181,7 +187,7 @@ class SolarSys(SolarSystem):
 		plt.show()
 
 	def _next_frame(self, i):
-		self.positions.set_data((0, *self.d_pos[0, :, i]), (0, *self.d_pos[1, :, i]))
+		self.positions.set_data((0, *self.ani_pos[0, :, i]), (0, *self.ani_pos[1, :, i]))
 		self.positions.set_label(("p1", "p2", "p3"))
 
 		return (self.positions,)
@@ -196,14 +202,14 @@ if __name__ == "__main__":
 	# system = SolarSys(18116)
 	# system = SolarSys(seed)
 
-	years = 10
+	years = 30
 	dt = 1e-4
 
 	# print(np.linalg.norm(system.initial_positions, axis=0))
 
 	# system.long_run(years, dt)
 
-	system.analytical_orbits()
+	# system.analytical_orbits()
 	# system.iterated_orbits(years, dt)
 	# system.load_pos(f"pos_{years}yr.npy")
 
@@ -226,8 +232,8 @@ if __name__ == "__main__":
 	# print(f"time {years}: {t1}")
 	# timer = time.time()
 
-	system.plot_orbits(a=True, d=True)
-	# system.animate_orbits()
+	system.plot_orbits(d=True)
+	# system.animate_orbits(0, 7)
 	# np.save(f"npys/pos_{years}yr", system.d_pos)
 
 	# system.verify_planet_positions(years * system.one_year, system.d_pos, f"{path}/planet_trajectories_{years}yr.npy")
