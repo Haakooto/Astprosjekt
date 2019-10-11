@@ -52,8 +52,8 @@ def habitable_planets(system):
 	panel_area = 1
 	E_lander = F_p * panel_area * 0.12  # energy hitting the solar panels on each planet
 
-	min_T = 260  # -16C
-	max_T = 390  # 117C
+	min_T = 270  # -16C
+	max_T = 370  # 117C
 	max_R = distance(min_T)
 	min_R = distance(max_T)
 	index = []
@@ -64,22 +64,28 @@ def habitable_planets(system):
 	return index, util.m_to_AU(max_R), util.m_to_AU(min_R)
 
 def plot_habzone(system, mx, mn):
-	system.analytical_orbits()
-
+	year = 40
+	dt = 1e-4
+	system.differential_orbits(year, dt)
+	N = 100
 
 	phi = np.linspace(0, 2 * np.pi, 1000)
 	X = np.cos(phi)
 	Y = np.sin(phi)
 	R = mn
-	dr = (mx - mn) / 100
+	dr = (mx - mn) / N
 
-	for _ in range(100):
+	for _ in range(N):
 		x = R * X
 		y = R * Y
-		plt.plot(x, y, "g", lw=1)
+		plt.plot(x, y, "xkcd:bright green", lw=1)
 		R += dr
 
-	system.plot_orbits(a=True)
+	system.plot_orbits(d=True, init=False, final=False)
+	plt.plot([0], [0], "xkcd:bright green", label="Habitable Zone")
+
+	plt.title("Habitable zone in solar system")
+	plt.show()
 
 if __name__ == "__main__":
 	seed = 76117
@@ -87,4 +93,5 @@ if __name__ == "__main__":
 
 	idx, mxR, mnR = habitable_planets(system)
 	print(idx)
-	plot_habzone(system, mxR, mnR)
+	print(mnR, mxR)
+	# plot_habzone(system, mxR, mnR)
