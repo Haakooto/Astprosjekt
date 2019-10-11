@@ -66,13 +66,16 @@ def position(system, mission):
 						return pos
 
 
-def navigate(system, mission, path):
-	references = np.load(f"{path}/ang_ori_refs.npy")
-	mission.take_picture(full_sky_image_path=f"{path}/himmelkule.npy")
-	image = Image.open("sky_picture.png")
+def navigate(system, mission, path, doangle=True):
+	if doangle:
+		references = np.load(f"{path}/ang_ori_refs.npy")
+		mission.take_picture(full_sky_image_path=f"{path}/himmelkule.npy")
+		image = Image.open("sky_picture.png")
 
+		angle = AO.determine_angle(image, references)
+	else:
+		angle = 0
 
-	angle = AO.determine_angle(image, references)
 	v = velocity(mission)
 	pos = position(system, mission)
 
@@ -88,16 +91,18 @@ if __name__ == "__main__":
 	mission = SpaceMission(seed, path, False, True)
 	system = SolarSys(seed, path, False, True)
 
-	years = 30
+	years = 10
 	dt_pr_yr = 1e-4
 
-	site = 0
-	launch_time = 0
+	site = np.pi
+	launch_time = np.pi
 
 	system.differential_orbits(years, dt_pr_yr)
 
 	Volcano, Epstein = launch.do_launch()
 	launch.change_reference(mission, system, Volcano, Epstein, site, launch_time)
+	pos_ref = mission._position_after_launch
+	vel_ref = mission._velocity_after_launch
 
 	X = navigate(system, mission, path)
 	mission.verify_manual_orientation(*X)
@@ -106,7 +111,9 @@ if __name__ == "__main__":
 	print(f"Velocity after launch: {X[1]}AU/yr")
 	print(f"Angle after launch: {X[2]}deg")
 
-	print(mission._position_after_launch)
-	print(mission._velocity_after_launch)
+	print(f"Relative deviation from correct position: {pos_ref / X[0] - 1}")
+	print(f"Relative deviation from correct velocity: {vel_ref / X[1] - 1}")
 
+	print(f"Absolute deviation from correct position: {abs(pos_ref - X[0])}")
+	print(f"Absolute deviation from correct velocity: {abs(vel_ref - X[1])}")
 
