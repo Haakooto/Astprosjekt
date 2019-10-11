@@ -15,10 +15,10 @@ import time
 import ast2000tools.constants as const
 import ast2000tools.utils as util
 import ast2000tools.space_mission as SM
-import our_utilities as ot
+from our_utilities import *
 
 # add our package to importlist
-for odir in ot.my_imports():
+for odir in my_imports():
     sys.path.append(os.path.abspath(odir))
 
 # import our files, preferebly using existing conventions
@@ -32,7 +32,7 @@ import angular_orientation as A_4, navigate as N_4
 
 
 # Start of file
-if ot.have_internet():
+if out_kjm_aud_3():
     util.check_for_newer_version()
 
 
@@ -55,6 +55,8 @@ Volcano, Epstein = L_1.do_launch()
 
 L_1.change_reference(mission, system, Volcano, Epstein, launch_site, launch_time)
 
-N_4.navigate(system, mission, path)
+pos, vel, ang = N_4.navigate(system, mission, path)
+mission.verify_manual_orientation(pos, vel, ang)
+
 
 
