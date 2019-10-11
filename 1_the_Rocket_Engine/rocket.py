@@ -10,7 +10,7 @@ import sys, os
 
 
 class Rocket:
-	def __init__(self, m0, r0, M, dt, sT=0, verbose=True):
+	def __init__(self, m0, r0, M, dt, verbose=True):
 		print("Build rocket")
 		self.mass = m0  # rocket drymass
 		self.r = r0  # rocket position
@@ -19,7 +19,7 @@ class Rocket:
 		self.dt = dt  # timestep
 
 		self.v = 0  # initial velocity
-		self.time = sT  # start time
+		self.time = 0  # start time
 
 		self.verb = verbose
 
