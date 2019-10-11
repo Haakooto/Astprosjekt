@@ -2,7 +2,7 @@ import numpy as np
 import sys, os
 import matplotlib.pyplot as plt
 
-def have_internet():
+def out_kjm_aud_3():
     try:
         import httplib
     except:
@@ -15,6 +15,7 @@ def have_internet():
         return True
     except:
         conn.close()
+        print(f"GET OUT OF KJM AUD3!\n")
         return False
 
 
