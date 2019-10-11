@@ -32,7 +32,7 @@ class Rocket:
 	def launch(self):
 		if self.verb:
 			self.launch_sequence()
-		self.engine.ignite()
+		self.engine.ignite(self.verb)
 
 		self.thrust = self.engine.thrust * self.Ne
 		self.burn_rate = self.engine.consume * self.Ne
