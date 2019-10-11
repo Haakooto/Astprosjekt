@@ -11,7 +11,8 @@ import sys, os
 
 class Rocket:
 	def __init__(self, m0, r0, M, dt, verbose=True):
-		print("Build rocket")
+		if verbose:
+			print("Build rocket")
 		self.mass = m0  # rocket drymass
 		self.r = r0  # rocket position
 		self.R = r0  # planet radius
