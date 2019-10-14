@@ -52,7 +52,7 @@ rocket_build = lambda: [mass, R, M, dt_r]
 parts = lambda engine: [engine, fuel_load, Ne]
 
 
-def do_launch(verb=True):
+def do_launch(Rocket=Rocket, verb=True):
 	Volcano = Rocket(*rocket_build(), verbose=verb)
 	Epstein = Engine(*engine_build())
 
