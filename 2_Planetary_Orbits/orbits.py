@@ -28,6 +28,7 @@ class SolarSys(SolarSystem):
 		self.ordered_planets = np.argsort(
 			np.argsort(np.linalg.norm(self.initial_positions, axis=0))
 		)
+		# self.d_pos = np.zeros((2, 1, 1))
 
 	def year_convert_to(self, T, planet="L"):
 		# converts to the specified planet, if L: from earth to Laconia, if E other way
@@ -83,6 +84,7 @@ class SolarSys(SolarSystem):
 			y = R * np.sin(u)
 
 			self.d_pos = np.transpose([x, y], (0, 2, 1))
+			self.angles_of_all_times = u
 
 		else:
 			self.time = np.zeros((1), dtype=int)
@@ -117,7 +119,14 @@ class SolarSys(SolarSystem):
 
 		self.i_pos = pos
 
-	def plot_orbits(self, a=False, i=False, d=False, init=True, final=True):
+	def plot_orbits(self, array=1, a=False, init=True, final=True):
+		if type(array) is int:
+			array = self.d_pos
+
+		shap = array.shape
+		if shap[0] != 2 or shap[1] not in [7, 8, 9] or len(shap) != 3:
+			print("Youve done wrong!")
+			return 0
 
 		ordered_planets = np.argsort(np.linalg.norm(self.initial_positions, axis=0))
 		planet_names = [
@@ -133,29 +142,31 @@ class SolarSys(SolarSystem):
 			"X",
 		]
 
-		for p in range(self.number_of_planets):
-			lab = f"{planet_names[self.ordered_planets[p]]}"#; nr. {self.ordered_planets[p]}"
-			if i:
-				plt.plot(*self.i_pos[:, p, :], "b", label=f"{lab}")
-			if d:
-				plt.plot(*self.d_pos[:, p, :], label=f"{lab}")
 		if a:
+			try:
+				self.a_pos
+			except:
+				self.analytical_orbits()
 			plt.plot(*self.a_pos, "y")
 			plt.plot(*self.a_pos[:, 0, 0], "y", label="Analytical orbits")
-		if init:
-			plt.scatter(*self.initial_positions, label="start")
-		if final and i:
-			plt.scatter(*self.i_pos[:, :, -1], label="final")
-		if final and d:
-			plt.scatter(*self.d_pos[:, :, -1], label="final")
 
-		plt.scatter([0], [0], s=80, c=np.array(self.star_color) / 255, label="Sun")
+		for p in range(self.number_of_planets):
+			lab = f"{planet_names[self.ordered_planets[p]]}"#; nr. {self.ordered_planets[p]}"
+			plt.plot(*array[:, p, :], label=f"{lab}")
+
+		if init:
+			plt.scatter(*array[:, :, 0], label="start")
+		if final:
+			plt.scatter(*array[:, :, -1], label="final")
+
+		plt.scatter([0], [0], s=80, color=np.array(self.star_color) / 255, label="Sun")
 
 		plt.grid()
 		plt.axis("equal")
-		plt.xlabel("x, [AU]")
-		plt.ylabel("y, [AU]")
-		plt.legend(loc=1)
+		plt.xlabel("x, [AU]", fontsize=20)
+		plt.ylabel("y, [AU]", fontsize=20)
+		plt.legend(loc=1, fontsize=15)
+
 		if __name__ == "__main__":
 			plt.show()
 
@@ -232,7 +243,7 @@ if __name__ == "__main__":
 	# print(f"time {years}: {t1}")
 	# timer = time.time()
 
-	system.plot_orbits(d=True)
+	system.plot_orbits(system.d_pos)
 	# system.animate_orbits(0, 7)
 	# np.save(f"npys/pos_{years}yr", system.d_pos)
 
