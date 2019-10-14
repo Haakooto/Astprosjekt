@@ -52,8 +52,8 @@ def habitable_planets(system):
 	panel_area = 1
 	E_lander = F_p * panel_area * 0.12  # energy hitting the solar panels on each planet
 
-	min_T = 270  # -16C
-	max_T = 370  # 117C
+	min_T = 260  # -13C
+	max_T = 390  # 117C
 	max_R = distance(min_T)
 	min_R = distance(max_T)
 	index = []
@@ -84,7 +84,7 @@ def plot_habzone(system, mx, mn):
 	system.plot_orbits(d=True, init=False, final=False)
 	plt.plot([0], [0], "xkcd:bright green", label="Habitable Zone")
 
-	plt.title("Habitable zone in solar system")
+	plt.title("Habitable zone in solar system", fontsize=25)
 	plt.show()
 
 if __name__ == "__main__":
@@ -94,4 +94,4 @@ if __name__ == "__main__":
 	idx, mxR, mnR = habitable_planets(system)
 	print(idx)
 	print(mnR, mxR)
-	# plot_habzone(system, mxR, mnR)
+	plot_habzone(system, mxR, mnR)
