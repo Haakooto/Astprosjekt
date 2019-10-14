@@ -1,5 +1,5 @@
 """
-Program for importere ast og lage grunnlag for de fleste program
+Program for generere bilder og bestemme angulær orientasjon
 
 All kode er egenskrevet
 """

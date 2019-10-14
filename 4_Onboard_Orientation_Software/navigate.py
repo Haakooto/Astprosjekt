@@ -34,9 +34,10 @@ def velocity(mission):
 	u = const.c*dlamda/lamda0
 
 	if phi1 > phi2:
-		v = 1/np.sin(phi2-phi1)*np.asarray([np.sin(phi2)*u[0] - np.sin(phi1)*u[1], - np.cos(phi2)*u[0] + np.cos(phi1)*u[1]])
+		diff = phi2 - phi1
 	else:
-		v = 1/np.sin(phi1-phi2)*np.asarray([np.sin(phi2)*u[0] - np.sin(phi1)*u[1], - np.cos(phi2)*u[0] + np.cos(phi1)*u[1]])
+		diff = phi1 - phi2
+	v = 1/np.sin(diff)*np.asarray([np.sin(phi2)*u[0] - np.sin(phi1)*u[1], - np.cos(phi2)*u[0] + np.cos(phi1)*u[1]])
 
 	return v * const.yr / const.AU
 
