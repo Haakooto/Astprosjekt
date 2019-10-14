@@ -29,7 +29,7 @@ from ast2000tools.solar_system import SolarSystem
 
 class SolarSys(SolarSys):
 	def plot_orb_for_inter_jour(self, T0, T1, a=False):
-		pos = self.d_pos
+		pos = self.d_pos[:, :2]
 
 		t0_idx = np.argmin(abs(self.time - T0))
 		t1_idx = np.argmin(abs(self.time - T1))
@@ -39,6 +39,9 @@ class SolarSys(SolarSys):
 		self.plot_orbits(pos, init=False, a=a)
 
 	def hohmann_transfer(self, dest):
+		"""
+		Using analytical formulas from wikipedia for hohmann-transfer
+		"""
 		r1 = self.semi_major_axes[0]
 		r2 = self.semi_major_axes[dest]
 		mu = self.star_mass * const.G_sol
@@ -54,21 +57,17 @@ class SolarSys(SolarSys):
 		alpha = np.pi - omega2 * tH
 		alpha2 = np.pi * (1 - 1 / (2 * np.sqrt(2)) * np.sqrt((r1 / r2) + 1) ** 3)
 
-		print(alpha, alpha2)
 		t0 = np.argmin(abs(U - alpha))
-		print(t0)
 		T0 = self.time[t0]
-
-		print(f"T0: {self.year_convert_to(T0, 'L')}")
-		print(f"tH: {tH}")
-		print(f"dv1: {dv1}")
-		print(f"dv2: {dv2}")
 
 		return T0, tH, dv1, dv2
 
 
 class Rocket(Rocket):
 	def begin_interplanetary_journey(self, system, mission, destination):
+		"""
+		Initiate travel phase
+		"""
 		self.system = system
 		self.mission = mission
 
@@ -83,30 +82,43 @@ class Rocket(Rocket):
 
 	def commands(self, c_list):
 		print("\nStarting interplanetary travel\n")
+		# every other element in list is coast duration and boost ammount
 		coasts = c_list[::2]
 		boosts = c_list[1::2]
 
 		if len(coasts) != len(boosts):
 			boosts.append((0,0))
+			# make even list for zip
 
 		if sum(coasts) > self.system.year_convert_to(self.system.time[-1], "L"):
-			print("\nCoasting is exceeding simulated time!")
+			print("\nCoasting duration is exceeding simulated time!")
 			print("Terminating")
 			sys.exit()
 
 		for c, b in zip(coasts, boosts):
-			boosted = self.coast(c)
-			if boosted != None:
-				if boosted.status:
-					self.travel_time = boosted.t_events[0][0]
-					print(f"We hit it at {boosted.t_events[0][0]}")
+			coasted = self.coast(c)
+			if coasted != None:
+			# is none if c = 0
+				if coasted.status:
+					self.travel_time = coasted.t_events[0][0]
+					print(f"We hit it at {self.system.year_convert_to(self.travel_time, 'L')}")
 					break
 			self.boost(b)
 
 
 	def coast(self, time, dt=1e-5):
-		print("coasting ", time)
-		def rddot(r, t):
+		"""
+		method for finding pos after time
+		uses solve_ivp
+
+		extra planetpos is found by linear interpolate, np.repeat
+		changing dt changes answer
+		"""
+		print(f"Coasting for {time} years")
+		def rddot(t, r):
+			"""
+			Calculate acceleration of spacecraft at time t and position r
+			"""
 			tidx = np.argmin(abs(Tlin - t))
 
 			Rx = r[0] - self.ri[0, :, tidx]
@@ -119,6 +131,9 @@ class Rocket(Rocket):
 			return np.asarray([a(Rx), a(Ry)])
 
 		def dominant_gravity(t, u):
+			"""
+			Method used by solve_ivp to terminate when dominant gravity
+			"""
 			r = u[:2]
 			tidx = np.argmin(abs(Tlin - t))
 
@@ -127,19 +142,22 @@ class Rocket(Rocket):
 			R = np.vstack((Rx, Ry))
 			Rnorm = np.linalg.norm(R, axis=0)
 
-			RRRR = Rnorm[self.dest + 1] - np.linalg.norm(r) * np.sqrt(self.Masses[self.dest + 1] / (self.k * self.Masses[0]))
-			return RRRR
+			return Rnorm[self.dest + 1] - np.linalg.norm(r) * np.sqrt(self.Masses[self.dest + 1] / (self.k * self.Masses[0]))
 		dominant_gravity.terminal = True
 
 		def diffeq(t, u):
+			"""
+			RHS of componentwise dr and dv
+			"""
 			r = u[:2]
 			drx, dry = u[2:]
 
-			dvx, dvy = rddot(r, t)
+			dvx, dvy = rddot(t, r)
 
 			return np.array([drx, dry, dvx, dvy])
 
 		if time == 0:
+			# Do nothing
 			return None
 
 		# time is number of L_years to coast
@@ -151,24 +169,27 @@ class Rocket(Rocket):
 
 		t0_idx = np.argmin(abs(self.system.time - T0))
 		t1_idx = np.argmin(abs(self.system.time - T1))
+		# Find where interval starts and ends
 
 		planets_pos = np.zeros((2, len(self.Masses), (t1_idx - t0_idx)))
 
 		planets_pos[:, 1:, :] = self.system.d_pos[:, :, t0_idx : t1_idx]
+		# planetpos in specified interval
 
 		T0 = round(T0, 8)
 		T1 = round(T1, 8)
 
-		N = round(nT / planets_pos.shape[-1])
-		nT = N * planets_pos.shape[-1]
+		N = round(nT / planets_pos.shape[-1]) # number of new points pr point in planetpos
+		nT = N * planets_pos.shape[-1] # make nT and N exactly compatible
 		Tlin = np.linspace(T0, T1, nT)
 
-		planets_pos = np.repeat(planets_pos, N, axis = 2)
+		planets_pos = np.repeat(planets_pos, N, axis = 2) # have planetpos in as many points as times
 		self.ri = planets_pos
 
 		u0 = np.concatenate((self.pos[:, -1], self.vel))
 
 		U = si.solve_ivp(diffeq, (T0, T1), u0, method="Radau", t_eval=Tlin, events=dominant_gravity)
+		# solves problem
 		u = U.y
 
 		pos, vel = np.split(u, 2)
@@ -177,18 +198,24 @@ class Rocket(Rocket):
 		self.pos = np.concatenate((self.pos, pos), axis=1)
 		self.vel = vel[:,-1]
 
-		return U
+		return U #dict with a lot of info about problem solution
 
 
 	def boost(self, dv):
-		print("boosting ", dv)
+		"""
+		Changes velocity, dv can be tuple or float
+		"""
 		if type(dv) is tuple:
+			print(f"Boost, dv = {dv} AU/yr")
 			self.vel += np.asarray(dv)
 			self.fuel -= self.fuel_use(dv)
+
 		elif type(dv) is int:
 			dv = float(dv)
+
 		elif type(dv) is float:
 			new_vel = self.vel * dv
+			print(f"Boost, dv = {new_vel - self.vel} AU/yr, {dv}v_current")
 			self.fuel -= self.fuel_use(abs(new_vel - self.vel))
 			self.vel = new_vel
 
@@ -218,11 +245,10 @@ if __name__ == "__main__":
 
 	T0, tH, dv1, dv2 = system.hohmann_transfer(destination)
 	# specs = [0.76, -0.4, [0.365, (0, -0.5), 0.15, (-1.75, 0.1), 0.15, (0, 0), 0.2, (0.5, 0), 0.7, 0.95, 0, (0.3, 0), 0.4 ]]
-	# specs = [0.76, -0.33, [0.3, 1.1, 0.3]]
-	# launch_time = specs[0]
-	# site = specs[1]
 
-	specs = [0, dv1, tH, dv2, 0.4]
+	# cmds = [0, dv1, tH, dv2, 0.4]
+	cmds = [tH, 0, 0.7]
+	# cmds = [0.41]
 	launch_time = 0.76
 	site = -0.6
 
@@ -232,15 +258,12 @@ if __name__ == "__main__":
 
 	Volcano.begin_interplanetary_journey(system, mission, destination=destination)
 
-	Volcano.commands(specs)
+	Volcano.commands(cmds)
 
-	# Volcano.hohmann_transfer()
-	# sys.exit()
-
-	system.plot_orb_for_inter_jour(mission.time_after_launch, Volcano.travel_time, a=True)
+	system.plot_orb_for_inter_jour(mission.time_after_launch, Volcano.travel_time)
 
 	Volcano.plot_journey()
-	plt.legend(loc=1)
+	plt.legend()
 	plt.axis("equal")
 	plt.show()
 
