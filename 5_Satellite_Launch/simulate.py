@@ -25,20 +25,32 @@ import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
+print("\n"*3, "File is depricated, stop use!!", "\n"*3)
+
 class SolarSys(SolarSys):
-	def simulated_trajectory(self, pos, vel, T0, T1):
+	def coast(self, pos, vel, T0, T1):
 		def rddot(r, t):
 			Rx = r[0] - ri[0, :, t]
 			Ry = r[1] - ri[1, :, t]
 			R = np.vstack((Rx, Ry))
 			Rnorm = np.linalg.norm(R, axis=0)
 
+			l_idx = np.argmin(Rnorm)
+			l = Rnorm[l_idx]
+			try:
+				if l < np.linalg.norm(r) * np.sqrt(M[l_idx + 1] / (10 * M[0])):
+					print("\n"*4)
+					print(f"unstable orbit reached")
+					print("\n"*4)
+			except:
+				print("\n"*3)
+				print("Something something")
+				print("\n"*3)
+
 			a = lambda x: - sum(const.G_sol * M * x / Rnorm ** 3)
 
 			A = np.asarray([a(Rx), a(Ry)])
-			# print(A)
 			return A
-			# a = - G * Ms * r / np.linalg.norm(r)**3 - np.sum(G * Mp * (r - rp) / np.linalg.norm(r - rp) **3 )
 
 		# input time in Laconia years
 		T1 = T0 + self.year_convert_to(T1, "E")
@@ -54,7 +66,6 @@ class SolarSys(SolarSys):
 
 		ndt = T1_idx - T0_idx + 1
 		index_time = np.arange(0, len(flight_time))
-		# print(len(flight_time))
 
 		M = np.concatenate(([self.star_mass], self.masses))
 		ri = np.zeros((2, len(M), ndt))
@@ -76,12 +87,12 @@ class SolarSys(SolarSys):
 
 		for p in range(self.number_of_planets):
 			plt.plot(*ri[:, p + 1, :])
-			plt.scatter(*ri[:, p + 1, -1])
+			# plt.scatter(*ri[:, p + 1, -1])
 		plt.plot(*fr)
-		plt.axis("equal")
-		plt.show()
+		# plt.axis("equal")
+		# plt.show()
 
-		return fr
+		return fr[:, -1], fv
 
 
 if __name__ == "__main__":
@@ -94,22 +105,28 @@ if __name__ == "__main__":
 	years = 20
 	dt_pr_yr = 1e-4
 
-	launch_time = 2.1415
-	site = np.pi/2
+	launch_time = 0.76
+	site = launch_time * 2 * np.pi
 
 	system.differential_orbits(years, dt_pr_yr)
 
-	Volcano, Epstein = launch.do_launch()
+	Volcano, Epstein = launch.do_launch(verb=False)
 	launch.change_reference(mission, system, Volcano, Epstein, site, launch_time)
-
+	print("star coastin")
 	pos, vel, ang = navigate(system, mission, path, doangle=False)
 	plt.scatter(*pos)
 
-	# print(pos)
-	pos = system.simulated_trajectory(pos, vel, mission.time_after_launch, 3.718)
-	# plt.plot(*pos)
-	# system.plot_orbits(d=True)
+	T00 = mission.time_after_launch
+	# command = [[T00, (0, 0)], [T00 + 0.3, (1, 0)], [T00 + 1.4, (1, -1)], [T00 + 1.5, (0,0)]]
+	command = [[T00, (0.95,-0.6)], [T00+0.115, (-1,-0.4)], [T00+0.13, (0,0)]]
+	prev_t = T00
+	for t, dv in command:
 
-	# print(mission._position_after_launch)
-	# print(mission._velocity_after_launch)
+		pos, vel = system.coast(pos, vel, prev_t , t)
+		prev_t = t
+		vel += np.asarray(dv)
+		print(vel)
+
+	plt.axis("equal")
+	plt.show()
 
