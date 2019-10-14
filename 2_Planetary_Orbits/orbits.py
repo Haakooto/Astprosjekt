@@ -124,7 +124,7 @@ class SolarSys(SolarSystem):
 			array = self.d_pos
 
 		shap = array.shape
-		if shap[0] != 2 or shap[1] not in [7, 8, 9] or len(shap) != 3:
+		if shap[0] != 2 or len(shap) != 3:
 			print("Youve done wrong!")
 			return 0
 
@@ -150,7 +150,7 @@ class SolarSys(SolarSystem):
 			plt.plot(*self.a_pos, "y")
 			plt.plot(*self.a_pos[:, 0, 0], "y", label="Analytical orbits")
 
-		for p in range(self.number_of_planets):
+		for p in range(len(array[:,])):
 			lab = f"{planet_names[self.ordered_planets[p]]}"#; nr. {self.ordered_planets[p]}"
 			plt.plot(*array[:, p, :], label=f"{lab}")
 
