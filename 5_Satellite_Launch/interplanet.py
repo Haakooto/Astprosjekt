@@ -205,27 +205,29 @@ class Rocket(Rocket):
 		return U #dict with a lot of info about problem solution
 
 
-	def boost(self, dv, new=False):
+	def boost(self, dv):
 		"""
 		Changes velocity, dv can be tuple or float
 		"""
-		if new:
-			self.fuel -= self.fuel_use(abs(self.vel - dv))
-			self.vel = dv
+		try:
+			dv = np.asarray(dv)
+		except:
+			print("Invalid dv given")
 		else:
-			if isinstance(dv, (tuple, list)):
+			try:
+				dv = float(dv)
+			except:
 				print(f"Boost, dv = {dv} AU/yr")
-				self.vel += np.asarray(dv)
+				self.vel += dv
 				self.fuel -= self.fuel_use(dv)
-
-			elif isinstance(dv, (int, float)):
+			else:
 				new_vel = self.vel * dv
 				print(f"Boost, dv = {new_vel - self.vel} AU/yr, {dv}v_current, {new_vel}")
 				self.fuel -= self.fuel_use(abs(new_vel - self.vel))
 				self.vel = new_vel
-
-		if self.fuel < 0:
-			print(f"We have run out of fuel!")
+		finally:
+			if self.fuel < 0:
+				print(f"We have run out of fuel!")
 
 	def fuel_use(self, dv):
 		return 0
@@ -248,7 +250,7 @@ class Rocket(Rocket):
 
 		Vfinal = Vp + vpm
 
-		self.boost(Vfinal, True)
+		self.boost(Vfinal - self.vel)
 		print("Stable orbit entered!")
 
 	def plot_journey(self):
