@@ -55,7 +55,6 @@ class SolarSys(SolarSys):
 		tH = np.pi * np.sqrt((r1 + r2) ** 3 / (8 * mu))
 		omega2 = np.sqrt(mu / r2 ** 3)
 		alpha = np.pi - omega2 * tH
-		alpha2 = np.pi * (1 - 1 / (2 * np.sqrt(2)) * np.sqrt((r1 / r2) + 1) ** 3)
 
 		t0 = np.argmin(abs(U - alpha))
 		T0 = self.time[t0]
@@ -90,23 +89,24 @@ class Rocket(Rocket):
 			boosts.append((0,0))
 			# make even list for zip
 
-		if sum(coasts) > self.system.year_convert_to(self.system.time[-1], "L"):
+		coasts = [[i] if type(i) != list else i for i in coasts]
+
+		if sum(coasts[:][0]) > self.system.year_convert_to(self.system.time[-1], "L"):
 			print("\nCoasting duration is exceeding simulated time!")
 			print("Terminating")
 			sys.exit()
 
 		for c, b in zip(coasts, boosts):
-			coasted = self.coast(c)
-			if coasted != None:
-			# is none if c = 0
+			if c != 0:
+				coasted = self.coast(*c)
 				if coasted.status:
+					print("We are close to planet")
 					self.travel_time = coasted.t_events[0][0]
-					print(f"We hit it at {self.system.year_convert_to(self.travel_time, 'L')}")
 					break
 			self.boost(b)
+		self.enter_stable_orbit()
 
-
-	def coast(self, time, dt=1e-5):
+	def coast(self, time, dt=1e-5, stop=True):
 		"""
 		method for finding pos after time
 		uses solve_ivp
@@ -159,6 +159,10 @@ class Rocket(Rocket):
 		if time == 0:
 			# Do nothing
 			return None
+		if stop:
+			event = dominant_gravity
+		else:
+			event = None
 
 		# time is number of L_years to coast
 		T0 = self.travel_time
@@ -188,7 +192,7 @@ class Rocket(Rocket):
 
 		u0 = np.concatenate((self.pos[:, -1], self.vel))
 
-		U = si.solve_ivp(diffeq, (T0, T1), u0, method="Radau", t_eval=Tlin, events=dominant_gravity)
+		U = si.solve_ivp(diffeq, (T0, T1), u0, method="Radau", t_eval=Tlin, events=event)
 		# solves problem
 		u = U.y
 
@@ -201,23 +205,24 @@ class Rocket(Rocket):
 		return U #dict with a lot of info about problem solution
 
 
-	def boost(self, dv):
+	def boost(self, dv, new=False):
 		"""
 		Changes velocity, dv can be tuple or float
 		"""
-		if type(dv) is tuple:
-			print(f"Boost, dv = {dv} AU/yr")
-			self.vel += np.asarray(dv)
-			self.fuel -= self.fuel_use(dv)
+		if new:
+			self.fuel -= self.fuel_use(abs(self.vel - dv))
+			self.vel = dv
+		else:
+			if isinstance(dv, (tuple, list)):
+				print(f"Boost, dv = {dv} AU/yr")
+				self.vel += np.asarray(dv)
+				self.fuel -= self.fuel_use(dv)
 
-		elif type(dv) is int:
-			dv = float(dv)
-
-		elif type(dv) is float:
-			new_vel = self.vel * dv
-			print(f"Boost, dv = {new_vel - self.vel} AU/yr, {dv}v_current")
-			self.fuel -= self.fuel_use(abs(new_vel - self.vel))
-			self.vel = new_vel
+			elif isinstance(dv, (int, float)):
+				new_vel = self.vel * dv
+				print(f"Boost, dv = {new_vel - self.vel} AU/yr, {dv}v_current, {new_vel}")
+				self.fuel -= self.fuel_use(abs(new_vel - self.vel))
+				self.vel = new_vel
 
 		if self.fuel < 0:
 			print(f"We have run out of fuel!")
@@ -225,9 +230,84 @@ class Rocket(Rocket):
 	def fuel_use(self, dv):
 		return 0
 
+	def enter_stable_orbit(self):
+		planet_pos = self.system.d_pos[:, self.dest, np.argmin(abs(self.system.time - self.travel_time))]
+
+		R = self.pos[:, -1] - planet_pos
+		r = np.linalg.norm(R)
+		r_tang = np.array([-R[1], R[0]]) / r
+
+		vpm = np.sqrt(const.G_sol * self.system.masses[self.dest] / r) * r_tang
+
+		planet_pos_norm = np.linalg.norm(planet_pos)
+		Rp_tang = np.array([-planet_pos[1], planet_pos[0]])
+		a = self.system.semi_major_axes[self.dest]
+
+		Vp = np.sqrt(const.G_sol * self.system.star_mass * (2 / planet_pos_norm - 1 / a))
+		Vp *= Rp_tang / planet_pos_norm
+
+		Vfinal = Vp + vpm
+
+		self.boost(Vfinal, True)
+		print("Stable orbit entered!")
+
 	def plot_journey(self):
 		plt.plot(*self.pos, "r--", label="Rocket path")
 		plt.scatter(*self.pos[:, -1], color="r", label="Final pos rocket")
+
+	def animate_journey(self):
+		print("animation not working")
+		return 0
+		from matplotlib.animation import FuncAnimation, FFMpegWriter
+
+		fig = plt.figure()
+
+		T1 = self.travel_time
+		T0 = self.mission.time_after_launch
+
+		planet_pos = self.system.d_pos[:, :2]
+
+		t0_idx = np.argmin(abs(self.system.time - T0))
+		t1_idx = np.argmin(abs(self.system.time - T1))
+		planet_pos = planet_pos[:, :, t0_idx : t1_idx]
+
+		N_points = planet_pos.shape[2]
+		n_points = self.pos.shape[1]
+		N = int(round(n_points / N_points))
+
+		rocket_pos = self.pos[:, ::N]
+		new_n = rocket_pos.shape[1]
+		planet_pos = planet_pos[:, :, abs(N_points - new_n):]
+
+		self.ani_pos = np.concatenate((rocket_pos.reshape(2, 1, rocket_pos.shape[1]), planet_pos), axis=1)
+
+		# Configure figure
+		plt.axis("equal")
+		plt.axis("off")
+		xmax = 2 * np.max(abs(self.ani_pos))
+		plt.axis((-xmax, xmax, -xmax, xmax))
+
+		# Make an "empty" plot object to be updated throughout the animation
+		self.ani, = plt.plot([], [], "o", lw=1)
+		# Call FuncAnimation
+		self.animation = FuncAnimation(
+			fig,
+			self._next_frame,
+			frames=range(self.ani_pos.shape[2]),
+			repeat=True,
+			interval=1,  # 000 * self.dt,
+			blit=True,
+			save_count=100,
+		)
+
+		plt.show()
+
+	def _next_frame(self, i):
+		self.ani.set_data((0, *self.ani_pos[0, :, i]), (0, *self.ani_pos[1, :, i]))
+		# self.animation.set_label(("p1", "p2", "p3"))
+
+		return (self.ani,)
+
 
 
 if __name__ == "__main__":
@@ -244,11 +324,8 @@ if __name__ == "__main__":
 	system.differential_orbits(years, dt_pr_yr)
 
 	T0, tH, dv1, dv2 = system.hohmann_transfer(destination)
-	# specs = [0.76, -0.4, [0.365, (0, -0.5), 0.15, (-1.75, 0.1), 0.15, (0, 0), 0.2, (0.5, 0), 0.7, 0.95, 0, (0.3, 0), 0.4 ]]
 
-	# cmds = [0, dv1, tH, dv2, 0.4]
-	cmds = [tH, 0, 0.7]
-	# cmds = [0.41]
+	cmds = [0.06, 1, 0.4] # coast for 0.06 years, do nothing, coast for 0.4 more
 	launch_time = 0.76
 	site = -0.6
 
@@ -260,10 +337,12 @@ if __name__ == "__main__":
 
 	Volcano.commands(cmds)
 
+	Volcano.coast(0.1, dt=1e-7, stop=False)
+
 	system.plot_orb_for_inter_jour(mission.time_after_launch, Volcano.travel_time)
 
 	Volcano.plot_journey()
-	plt.legend()
+	plt.legend(loc=1)
 	plt.axis("equal")
 	plt.show()
 
