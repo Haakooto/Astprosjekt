@@ -120,7 +120,7 @@ class Rocket(Rocket):
 		self.boost(self.enter_stable_orbit_boost())
 		print("Stable orbit entered!")
 
-	def coast(self, time, dt=1e-5, stop=True):
+	def coast(self, time, dt=1e-6, stop=True):
 		"""
 		method for finding pos after time
 		uses solve_ivp
