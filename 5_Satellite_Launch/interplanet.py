@@ -190,7 +190,7 @@ class Rocket(Rocket):
 		t0_idx = np.argmin(abs(self.system.time - T0))
 		t1_idx = np.argmin(abs(self.system.time - T1))
 		# Find where interval starts and ends
-		# print(t1_idx - t0_idx)
+		print(t1_idx - t0_idx)
 
 		planets_pos = np.zeros((2, len(self.Masses), (t1_idx - t0_idx)))
 
@@ -201,16 +201,26 @@ class Rocket(Rocket):
 		T0 = round(T0, 8)
 		T1 = round(T1, 8)
 
-		N = round(nT / planets_pos.shape[-1]) # number of new points pr point in planetpos
+		N = int(round(nT / planets_pos.shape[-1])) # number of new points pr point in planetpos
 		nT = N * planets_pos.shape[-1] # make nT and N exactly compatible
 		Tlin = np.linspace(T0, T1, nT)
+		# print(Tlin.shape)
 
 		# print(N)
 		self.ri = np.repeat(planets_pos, N, axis = 2) # have planetpos in as many points as times
+		for i in range(planets_pos.shape[-1]):
+			k0 = i * N
+			k1 = k0 + N
+			# self.ri[:, :, i*N:i*N+N] =
+			self.ri[:, :, k0:k1] = np.transpose(np.linspace(self.ri[:, :, k0], self.ri[:, :, k1-1], N), (1, 2, 0))
+			# print(planets_pos[:, :, 0])
+			# sys.exit()
 		# print(self.ri.shape)
 
-		# self.system.plot_orbits(self.ri[:, 1:])
+		# self.system.plot_orbits(self.ri[:, 1:], init=False)
 
+
+		# sys.exit()
 		u0 = np.concatenate((self.pos[:, -1], self.vel))
 
 		U = si.solve_ivp(diffeq, (T0, T1), u0, method="Radau", t_eval=Tlin, events=event, atol=1e-6, rtol=1e-9)
@@ -288,8 +298,8 @@ if __name__ == "__main__":
 	system = SolarSys(seed, path, False, True)
 	Tc = lambda t: system.year_convert_to(t, "E")
 
-	years = 20
-	dt_pr_yr = 1e-4
+	years = 10
+	dt_pr_yr = 1e-6
 	destination = 1
 
 	system.differential_orbits(years, dt_pr_yr)
@@ -302,20 +312,20 @@ if __name__ == "__main__":
 
 	Volcano, Epstein = launch.do_launch(Rocket=Rocket, verb=False)
 	launch.change_reference(mission, system, Volcano, Epstein, site, launch_time)
-	mission.verify_manual_orientation(*navigate(system, mission, path))
+	# mission.verify_manual_orientation(*navigate(system, mission, path))
 
 
 	Volcano.begin_interplanetary_journey(system, mission, destination=destination, k=1)
 
 
-	# Volcano.commands(cmds)
-	# Volcano.coast(1, stop=False)
-	# Volcano.plot_journey()
+	Volcano.commands(cmds)
+	Volcano.coast(1, stop=False)
+	Volcano.plot_journey()
 
 
-	travel = mission.begin_interplanetary_travel()
-	travel.coast(Tc(0.06))
-	Volcano.coast(*(0.06, 1e-4))
+	# travel = mission.begin_interplanetary_travel()
+	# travel.coast(Tc(0.8))
+	# Volcano.coast(*(0.8, 1e-6))
 	# Volcano.teleport(*travel.orient())
 	# t1, pos1, vel1 = travel.orient()
 	# t2, pos2, vel2 = Volcano.orient()
@@ -326,10 +336,10 @@ if __name__ == "__main__":
 	# travel.coast(Tc(0.1))
 	# Volcano.coast(0.1, 1e-7)
 
-	t1, pos1, vel1 = travel.orient()
-	t2, pos2, vel2 = Volcano.orient()
-	print(t1, pos1, vel1)
-	print(t2, pos2, vel2)
+	# t1, pos1, vel1 = travel.orient()
+	# t2, pos2, vel2 = Volcano.orient()
+	# print(t1, pos1, vel1)
+	# print(t2, pos2, vel2)
 
 	# travel.coast(Tc(0.3053763429352502))
 	# Volcano.teleport(*travel.orient())
