@@ -24,6 +24,9 @@ from rocket import Rocket
 
 import ast2000tools.utils as util
 import ast2000tools.constants as const
+# sys.path.append(os.path.abspath("../decompiled"))
+# from space_mission import SpaceMission
+
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
@@ -63,10 +66,12 @@ class SolarSys(SolarSys):
 
 
 class Rocket(Rocket):
-	def begin_interplanetary_journey(self, system, mission, destination):
+	def begin_interplanetary_journey(self, system, mission, destination, k=10):
 		"""
 		Initiate travel phase
 		"""
+		print("\nStarting interplanetary travel\n")
+
 		self.system = system
 		self.mission = mission
 
@@ -75,12 +80,19 @@ class Rocket(Rocket):
 		self.vel = np.copy(mission._velocity_after_launch)
 
 		self.dest = destination
-		self.k = 10
+		self.k = k
 
 		self.Masses = np.concatenate(([system.star_mass], system.masses))
 
+	def teleport(self, t, pos, vel):
+		self.travel_time = t
+		self.pos = np.transpose([pos])
+		self.vel = np.copy(vel)
+
+	def orient(self):
+		return self.travel_time, self.pos[:, -1], self.vel
+
 	def commands(self, c_list):
-		print("\nStarting interplanetary travel\n")
 		# every other element in list is coast duration and boost ammount
 		coasts = c_list[::2]
 		boosts = c_list[1::2]
@@ -102,9 +114,11 @@ class Rocket(Rocket):
 				if coasted.status:
 					print("We are close to planet")
 					self.travel_time = coasted.t_events[0][0]
+					print(f"Actual coast time: {self.system.year_convert_to(coasted.t[-1] - coasted.t[0], 'L')}")
 					break
 			self.boost(b)
-		self.enter_stable_orbit()
+		self.boost(self.enter_stable_orbit_boost())
+		print("Stable orbit entered!")
 
 	def coast(self, time, dt=1e-5, stop=True):
 		"""
@@ -157,8 +171,8 @@ class Rocket(Rocket):
 			return np.array([drx, dry, dvx, dvy])
 
 		if time == 0:
-			# Do nothing
-			return None
+			return None # Do nothing
+
 		if stop:
 			event = dominant_gravity
 		else:
@@ -168,16 +182,20 @@ class Rocket(Rocket):
 		T0 = self.travel_time
 		self.travel_time += self.system.year_convert_to(time, "E")
 		T1 = self.travel_time
+		dt = self.system.year_convert_to(dt, "E")
 
-		nT = int((T1 - T0) / dt)
+		nT = round((T1 - T0) / dt)
+		# print(nT)
 
 		t0_idx = np.argmin(abs(self.system.time - T0))
 		t1_idx = np.argmin(abs(self.system.time - T1))
 		# Find where interval starts and ends
+		# print(t1_idx - t0_idx)
 
 		planets_pos = np.zeros((2, len(self.Masses), (t1_idx - t0_idx)))
 
 		planets_pos[:, 1:, :] = self.system.d_pos[:, :, t0_idx : t1_idx]
+		# print(planets_pos.shape)
 		# planetpos in specified interval
 
 		T0 = round(T0, 8)
@@ -187,12 +205,15 @@ class Rocket(Rocket):
 		nT = N * planets_pos.shape[-1] # make nT and N exactly compatible
 		Tlin = np.linspace(T0, T1, nT)
 
-		planets_pos = np.repeat(planets_pos, N, axis = 2) # have planetpos in as many points as times
-		self.ri = planets_pos
+		# print(N)
+		self.ri = np.repeat(planets_pos, N, axis = 2) # have planetpos in as many points as times
+		# print(self.ri.shape)
+
+		# self.system.plot_orbits(self.ri[:, 1:])
 
 		u0 = np.concatenate((self.pos[:, -1], self.vel))
 
-		U = si.solve_ivp(diffeq, (T0, T1), u0, method="Radau", t_eval=Tlin, events=event)
+		U = si.solve_ivp(diffeq, (T0, T1), u0, method="Radau", t_eval=Tlin, events=event, atol=1e-6, rtol=1e-9)
 		# solves problem
 		u = U.y
 
@@ -232,10 +253,11 @@ class Rocket(Rocket):
 	def fuel_use(self, dv):
 		return 0
 
-	def enter_stable_orbit(self):
+	def enter_stable_orbit_boost(self):
 		planet_pos = self.system.d_pos[:, self.dest, np.argmin(abs(self.system.time - self.travel_time))]
 
 		R = self.pos[:, -1] - planet_pos
+
 		r = np.linalg.norm(R)
 		r_tang = np.array([-R[1], R[0]]) / r
 
@@ -250,65 +272,11 @@ class Rocket(Rocket):
 
 		Vfinal = Vp + vpm
 
-		self.boost(Vfinal - self.vel)
-		print("Stable orbit entered!")
+		return Vfinal - self.vel
 
 	def plot_journey(self):
 		plt.plot(*self.pos, "r--", label="Rocket path")
 		plt.scatter(*self.pos[:, -1], color="r", label="Final pos rocket")
-
-	def animate_journey(self):
-		print("animation not working")
-		return 0
-		from matplotlib.animation import FuncAnimation, FFMpegWriter
-
-		fig = plt.figure()
-
-		T1 = self.travel_time
-		T0 = self.mission.time_after_launch
-
-		planet_pos = self.system.d_pos[:, :2]
-
-		t0_idx = np.argmin(abs(self.system.time - T0))
-		t1_idx = np.argmin(abs(self.system.time - T1))
-		planet_pos = planet_pos[:, :, t0_idx : t1_idx]
-
-		N_points = planet_pos.shape[2]
-		n_points = self.pos.shape[1]
-		N = int(round(n_points / N_points))
-
-		rocket_pos = self.pos[:, ::N]
-		new_n = rocket_pos.shape[1]
-		planet_pos = planet_pos[:, :, abs(N_points - new_n):]
-
-		self.ani_pos = np.concatenate((rocket_pos.reshape(2, 1, rocket_pos.shape[1]), planet_pos), axis=1)
-
-		# Configure figure
-		plt.axis("equal")
-		plt.axis("off")
-		xmax = 2 * np.max(abs(self.ani_pos))
-		plt.axis((-xmax, xmax, -xmax, xmax))
-
-		# Make an "empty" plot object to be updated throughout the animation
-		self.ani, = plt.plot([], [], "o", lw=1)
-		# Call FuncAnimation
-		self.animation = FuncAnimation(
-			fig,
-			self._next_frame,
-			frames=range(self.ani_pos.shape[2]),
-			repeat=True,
-			interval=1,  # 000 * self.dt,
-			blit=True,
-			save_count=100,
-		)
-
-		plt.show()
-
-	def _next_frame(self, i):
-		self.ani.set_data((0, *self.ani_pos[0, :, i]), (0, *self.ani_pos[1, :, i]))
-		# self.animation.set_label(("p1", "p2", "p3"))
-
-		return (self.ani,)
 
 
 
@@ -318,6 +286,7 @@ if __name__ == "__main__":
 
 	mission = SpaceMission(seed, path, False, True)
 	system = SolarSys(seed, path, False, True)
+	Tc = lambda t: system.year_convert_to(t, "E")
 
 	years = 20
 	dt_pr_yr = 1e-4
@@ -325,7 +294,7 @@ if __name__ == "__main__":
 
 	system.differential_orbits(years, dt_pr_yr)
 
-	T0, tH, dv1, dv2 = system.hohmann_transfer(destination)
+	# T0, tH, dv1, dv2 = system.hohmann_transfer(destination)
 
 	cmds = [0.06, 1, 0.4] # coast for 0.06 years, do nothing, coast for 0.4 more
 	launch_time = 0.76
@@ -333,17 +302,48 @@ if __name__ == "__main__":
 
 	Volcano, Epstein = launch.do_launch(Rocket=Rocket, verb=False)
 	launch.change_reference(mission, system, Volcano, Epstein, site, launch_time)
-	pos, vel, ang = navigate(system, mission, path, doangle=False)
+	mission.verify_manual_orientation(*navigate(system, mission, path))
 
-	Volcano.begin_interplanetary_journey(system, mission, destination=destination)
 
-	Volcano.commands(cmds)
+	Volcano.begin_interplanetary_journey(system, mission, destination=destination, k=1)
 
-	Volcano.coast(0.1, dt=1e-7, stop=False)
 
-	system.plot_orb_for_inter_jour(mission.time_after_launch, Volcano.travel_time)
+	# Volcano.commands(cmds)
+	# Volcano.coast(1, stop=False)
+	# Volcano.plot_journey()
+
+
+	travel = mission.begin_interplanetary_travel()
+	travel.coast(Tc(0.06))
+	Volcano.coast(*(0.06, 1e-4))
+	# Volcano.teleport(*travel.orient())
+	# t1, pos1, vel1 = travel.orient()
+	# t2, pos2, vel2 = Volcano.orient()
+	# print(t1, pos1, vel1)
+	# print(t2, pos2, vel2)
+
+
+	# travel.coast(Tc(0.1))
+	# Volcano.coast(0.1, 1e-7)
+
+	t1, pos1, vel1 = travel.orient()
+	t2, pos2, vel2 = Volcano.orient()
+	print(t1, pos1, vel1)
+	print(t2, pos2, vel2)
+
+	# travel.coast(Tc(0.3053763429352502))
+	# Volcano.teleport(*travel.orient())
+	# delta_v = Volcano.enter_stable_orbit_boost()
+	# travel.boost(delta_v)
+	# travel.coast(Tc(0.1))
+	# t, pos, vel = travel.orient()
+
+	# plt.scatter(*pos)
+
 
 	Volcano.plot_journey()
+	system.plot_orb_for_inter_jour(mission.time_after_launch, Volcano.travel_time)
+
 	plt.legend(loc=1)
 	plt.axis("equal")
 	plt.show()
