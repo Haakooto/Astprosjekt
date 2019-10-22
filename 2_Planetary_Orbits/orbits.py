@@ -15,6 +15,10 @@ import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
+# sys.path.append(os.path.abspath("../decompiled"))
+# from solar_system import SolarSystem
+
+
 
 class SolarSys(SolarSystem):
 	def __init__(self, seed, data_path=None, has_moons=True, verbose=True):
@@ -31,7 +35,10 @@ class SolarSys(SolarSystem):
 		# self.d_pos = np.zeros((2, 1, 1))
 
 	def year_convert_to(self, T, planet="L"):
+		# We kinda screwed the pooch by always using years relative to "our" (Laconias) solar system
+		# This is a bodge of a method but has become very useful
 		# converts to the specified planet, if L: from earth to Laconia, if E other way
+		T = np.asarray(T)
 		if planet == "L":
 			return T / self.one_year
 		elif planet == "E":
@@ -150,7 +157,7 @@ class SolarSys(SolarSystem):
 			plt.plot(*self.a_pos, "y")
 			plt.plot(*self.a_pos[:, 0, 0], "y", label="Analytical orbits")
 
-		for p in range(len(array[:,])):
+		for p in range(array.shape[1]):
 			lab = f"{planet_names[self.ordered_planets[p]]}"#; nr. {self.ordered_planets[p]}"
 			plt.plot(*array[:, p, :], label=f"{lab}")
 
@@ -176,6 +183,11 @@ class SolarSys(SolarSystem):
 		fig = plt.figure()
 		self.ani_pos = self.d_pos[:, inn:ut+1, :]
 
+		# self.ani_anal_pos = np.transpose(self.a_pos, (0, 2, 1))
+		self.ani_anal_pos = self.a_pos
+		# self.ani_x_data = []
+		# self.ani_y_data = []
+
 		# Configure figure
 		plt.axis("equal")
 		plt.axis("off")
@@ -198,9 +210,20 @@ class SolarSys(SolarSystem):
 		plt.show()
 
 	def _next_frame(self, i):
+		# x_data = [0]
+		# y_data = [0]
+
+		# for p in range(self.number_of_planets):
+		# 	x_data.append(self.ani_pos[0, p, i])
+		# 	y_data.append(self.ani_pos[1, p, i])
+		# 	for s in range(self.ani_anal_pos.shape[1]):
+		# 		x_data.append(self.ani_anal_pos[0, s, p])
+		# 		x_data.append(self.ani_anal_pos[1, s, p])
+
+
 		self.positions.set_data((0, *self.ani_pos[0, :, i]), (0, *self.ani_pos[1, :, i]))
 		self.positions.set_label(("p1", "p2", "p3"))
-
+		# self.positions.set_data(tuple(x_data), tuple(y_data))
 		return (self.positions,)
 
 
@@ -220,7 +243,7 @@ if __name__ == "__main__":
 
 	# system.long_run(years, dt)
 
-	# system.analytical_orbits()
+	system.analytical_orbits()
 	# system.iterated_orbits(years, dt)
 	# system.load_pos(f"pos_{years}yr.npy")
 
@@ -243,8 +266,8 @@ if __name__ == "__main__":
 	# print(f"time {years}: {t1}")
 	# timer = time.time()
 
-	system.plot_orbits(system.d_pos)
-	# system.animate_orbits(0, 7)
+	system.plot_orbits()
+	system.animate_orbits(0, 7)
 	# np.save(f"npys/pos_{years}yr", system.d_pos)
 
 	# system.verify_planet_positions(years * system.one_year, system.d_pos, f"{path}/planet_trajectories_{years}yr.npy")
