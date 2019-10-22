@@ -6,6 +6,7 @@ All kode er egenskrevet
 
 import numpy as np
 import sys, os
+import time as tim
 import matplotlib.pyplot as plt
 from PIL import Image
 import glob
@@ -58,9 +59,10 @@ class SolarSys(SolarSys):
 		tH = np.pi * np.sqrt((r1 + r2) ** 3 / (8 * mu))
 		omega2 = np.sqrt(mu / r2 ** 3)
 		alpha = np.pi - omega2 * tH
-
+		print(alpha)
 		t0 = np.argmin(abs(U - alpha))
 		T0 = self.time[t0]
+		print(T0)
 
 		return T0, tH, dv1, dv2
 
@@ -109,7 +111,7 @@ class Rocket(Rocket):
 			sys.exit()
 
 		for c, b in zip(coasts, boosts):
-			if c != 0:
+			if c[0] != 0:
 				coasted = self.coast(*c)
 				if coasted.status:
 					print("We are close to planet")
@@ -120,7 +122,7 @@ class Rocket(Rocket):
 		self.boost(self.enter_stable_orbit_boost())
 		print("Stable orbit entered!")
 
-	def coast(self, time, dt=1e-6, stop=True):
+	def coast(self, time, dt=1e-5, stop=True):
 		"""
 		method for finding pos after time
 		uses solve_ivp
@@ -159,6 +161,12 @@ class Rocket(Rocket):
 			return Rnorm[self.dest + 1] - np.linalg.norm(r) * np.sqrt(self.Masses[self.dest + 1] / (self.k * self.Masses[0]))
 		dominant_gravity.terminal = True
 
+		def overtime(t, u):
+			T = tim.time() - self.timer
+			# print(T)
+			return round(30 - T)
+		overtime.terminal = True
+
 		def diffeq(t, u):
 			"""
 			RHS of componentwise dr and dv
@@ -172,9 +180,10 @@ class Rocket(Rocket):
 
 		if time == 0:
 			return None # Do nothing
+		self.timer = tim.time()
 
 		if stop:
-			event = dominant_gravity
+			event = [dominant_gravity, overtime]
 		else:
 			event = None
 
@@ -185,18 +194,14 @@ class Rocket(Rocket):
 		dt = self.system.year_convert_to(dt, "E")
 
 		nT = round((T1 - T0) / dt)
-		# print(nT)
 
 		t0_idx = np.argmin(abs(self.system.time - T0))
 		t1_idx = np.argmin(abs(self.system.time - T1))
 		# Find where interval starts and ends
-		print(t1_idx - t0_idx)
 
 		planets_pos = np.zeros((2, len(self.Masses), (t1_idx - t0_idx)))
 
 		planets_pos[:, 1:, :] = self.system.d_pos[:, :, t0_idx : t1_idx]
-		# print(planets_pos.shape)
-		# planetpos in specified interval
 
 		T0 = round(T0, 8)
 		T1 = round(T1, 8)
@@ -204,31 +209,22 @@ class Rocket(Rocket):
 		N = int(round(nT / planets_pos.shape[-1])) # number of new points pr point in planetpos
 		nT = N * planets_pos.shape[-1] # make nT and N exactly compatible
 		Tlin = np.linspace(T0, T1, nT)
-		# print(Tlin.shape)
 
-		# print(N)
 		self.ri = np.repeat(planets_pos, N, axis = 2) # have planetpos in as many points as times
-		for i in range(planets_pos.shape[-1]):
+		for i in range(planets_pos.shape[-1] - 1):
 			k0 = i * N
 			k1 = k0 + N
-			# self.ri[:, :, i*N:i*N+N] =
-			self.ri[:, :, k0:k1] = np.transpose(np.linspace(self.ri[:, :, k0], self.ri[:, :, k1-1], N), (1, 2, 0))
-			# print(planets_pos[:, :, 0])
-			# sys.exit()
-		# print(self.ri.shape)
-
-		# self.system.plot_orbits(self.ri[:, 1:], init=False)
+			self.ri[:, :, k0:k1] = np.transpose(np.linspace(self.ri[:, :, k0], self.ri[:, :, k1], N), (1, 2, 0))
 
 
-		# sys.exit()
 		u0 = np.concatenate((self.pos[:, -1], self.vel))
 
-		U = si.solve_ivp(diffeq, (T0, T1), u0, method="Radau", t_eval=Tlin, events=event, atol=1e-6, rtol=1e-9)
+		U = si.solve_ivp(diffeq, (T0, T1), u0, method="Radau", t_eval=Tlin, events=event, atol=1e-5, rtol=1e-7)
 		# solves problem
 		u = U.y
 
 		pos, vel = np.split(u, 2)
-		plt.scatter(*pos[:, -1], color="r")
+		# plt.scatter(*pos[:, -1], color="r")
 
 		self.pos = np.concatenate((self.pos, pos), axis=1)
 		self.vel = vel[:,-1]
@@ -257,6 +253,7 @@ class Rocket(Rocket):
 				self.fuel -= self.fuel_use(abs(new_vel - self.vel))
 				self.vel = new_vel
 		finally:
+			plt.scatter(*self.pos[:, -1], color="r")
 			if self.fuel < 0:
 				print(f"We have run out of fuel!")
 
@@ -299,16 +296,19 @@ if __name__ == "__main__":
 	Tc = lambda t: system.year_convert_to(t, "E")
 
 	years = 10
-	dt_pr_yr = 1e-6
+	dt_pr_yr = 1e-5
 	destination = 1
 
 	system.differential_orbits(years, dt_pr_yr)
 
-	# T0, tH, dv1, dv2 = system.hohmann_transfer(destination)
+	T0, tH, dv1, dv2 = system.hohmann_transfer(destination)
 
-	cmds = [0.06, 1, 0.4] # coast for 0.06 years, do nothing, coast for 0.4 more
-	launch_time = 0.76
-	site = -0.6
+	# cmds = [0.06, 1, 0.4] # coast for 0.06 years, do nothing, coast for 0.4 more
+	# cmds = [0, dv1, tH, dv2]
+	cmds = [0.1]
+	launch_time = system.year_convert_to(T0, "L")
+	launch_time = T0
+	site = 0
 
 	Volcano, Epstein = launch.do_launch(Rocket=Rocket, verb=False)
 	launch.change_reference(mission, system, Volcano, Epstein, site, launch_time)
@@ -319,7 +319,7 @@ if __name__ == "__main__":
 
 
 	Volcano.commands(cmds)
-	Volcano.coast(1, stop=False)
+	# Volcano.coast(0.1, stop=False)
 	Volcano.plot_journey()
 
 
