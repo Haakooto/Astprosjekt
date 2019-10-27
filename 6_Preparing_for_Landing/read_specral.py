@@ -44,17 +44,16 @@ def load_data():
 class Chi_square:
 	def __init__(self, data, resolution):
 		self.lambdas, self.fluxes, self.sigmas = data
+		self.resolution = resolution # number of points to divvy interval into
 		self.data_points = len(self.lambdas)
-		self.resolution = resolution
 
 	def f(self, L, Fmin, S, L0):
 		return 1 + (Fmin - 1) * np.exp(- (L - L0) ** 2 / (2 * S ** 2))
 
-	def residual(self, m, Bs):
-
-		Fmin = Bs[:, :, :, 0]
-		S = Bs[:, :, :, 1]
-		L0 = Bs[:, :, :, 2]
+	def residual(self, m, betas):
+		Fmin = betas[:, :, :, 0]
+		S = betas[:, :, :, 1]
+		L0 = betas[:, :, :, 2]
 		return ((self.fluxes[m] - self.f(self.lambdas[m], Fmin, S, L0)) / self.sigmas[m]) ** 2
 
 
@@ -65,23 +64,73 @@ class Chi_square:
 
 
 		permutations = np.transpose(np.asarray(np.meshgrid(Fmin, S, L0)), (1, 2, 3, 0))
+		# don't ask why this works, it just does. Was developed late at night
 
 		R = np.zeros(([self.resolution] * 3))
+		# 3D residual array
 
 		for m in range(self.data_points):
 			R += self.residual(m, permutations)
+			# Add to R by applying all permuts to each data_point, not by applying all datapoints to each permut.
 
 		idx = np.unravel_index(np.argmin(R, axis = None), R.shape)
+		# finds index of min(R), so we can find the permut that gave least residual
 		return permutations[idx]
 
 
-def Sigma(L, mass):
-	tmin = 150
-	tmax = 450
 
-	S = lambda T: L /  const.c * np.sqrt(const.k_B * T / mass)
+class Atmosphere:
+	def __init__(self, names, masses, lambda_zeros, data):
+		self.Ns = np.asarray(names)
+		self.N = len(names)
+		self.Ms = np.asarray(masses)
+		self.LZs = np.asarray(lambda_zeros)
 
-	return S(tmin), S(tmax)
+		self.data = np.asarray(data)
+
+	def Sigma(self, L, mass):
+		tmin = 150
+		tmax = 450
+
+		S = lambda T: L /  const.c * np.sqrt(const.k_B * T / mass)
+		return S(tmin), S(tmax)
+
+	def Temp(self, L, S, m):
+		return m * (S * const.c / L) ** 2 / const.k_B
+
+	def velocity(self, L, L0):
+		return const.c * (L - L0) / L0
+
+	def analyse_data(self, res=50, mxD=3e+4):
+		self.est_Fmins = np.zeros(self.N)
+		self.est_sigms = np.zeros(self.N)
+		self.est_lam0s = np.zeros(self.N)
+
+		self.est_Ts = np.zeros(self.N)
+
+		for mass, lz, i in zip(self.Ms, self.LZs, np.arange(self.N)):
+			print(i)
+			Dmax = lz / mxD
+			L_min = lz - Dmax
+			L_max = lz + Dmax
+
+			start = np.argmin(abs(self.data[0] - L_min))
+			end = np.argmin(abs(self.data[0] - L_max))
+
+			data_intervalled = self.data[:, start : end]
+			molecyl = Chi_square(data_intervalled, res)
+			analysis = molecyl.find_best(0.7, 1, *self.Sigma(lz, mass * const.m_p), L_min, L_max)
+
+			self.est_Fmins[i], self.est_sigms[i], self.est_lam0s[i] = analysis
+
+		self.est_Ts = self.Temp(self.est_lam0s, self.est_sigms, self.Ms * const.m_p)
+		self.est_vel = self.velocity(self.est_lam0s, self.LZs)
+
+		print(self.est_Ts)
+		print(self.est_Fmins)
+		print(self.est_vel)
+
+
 
 
 if __name__ == "__main__":
@@ -89,31 +138,34 @@ if __name__ == "__main__":
 
 	if sys.argv[-1] == "read_data":
 		read_first_time()
-	else:
-		lambdas, rel_flux, sigmas = load_data()
+	# else:
+		# lambdas, rel_flux, sigmas = load_data()
 
-	plt.plot(lambdas, rel_flux, "b")
+	# plt.plot(lambdas, rel_flux, "b")
 
 	names = ["O2_1", "O2_2", "O2_3", "H20_1", "H2O_2", "H2O_3", "CO2_1", "CO2_2", "CH4_1", "CH4_2", "CO", "N2O"]
 	masses = [32, 32, 32, 18, 18, 18, 44, 44, 16, 16, 28, 44]
 	lambda_zeros = [632, 690, 760, 720, 820, 940, 1400, 1600, 1660, 2200, 2340, 2870]
 
-	for name, mass, lambda_zero in zip(names, masses, lambda_zeros):
-		dmax = lambda_zero / 3e+4
-		lambda_min = lambda_zero - dmax
-		lambda_max = lambda_zero + dmax
+	Atmos = Atmosphere(names, masses, lambda_zeros, load_data())
+	Atmos.analyse_data()
 
-		start = np.argmin(abs(lambdas - lambda_min))
-		end = np.argmin(abs(lambdas - lambda_max))
+	# for name, mass, lambda_zero in zip(names, masses, lambda_zeros):
+	# 	dmax = lambda_zero / 3e+4
+	# 	lambda_min = lambda_zero - dmax
+	# 	lambda_max = lambda_zero + dmax
 
-		data = [lambdas[start : end], rel_flux[start : end], sigmas[start : end]]
+	# 	start = np.argmin(abs(lambdas - lambda_min))
+	# 	end = np.argmin(abs(lambdas - lambda_max))
 
-		molecyl = Chi_square(data, 50)
+	# 	data = [lambdas[start : end], rel_flux[start : end], sigmas[start : end]]
 
-		analysis = molecyl.find_best(0.7, 1, *Sigma(lambda_zero, mass * const.m_p), lambda_min, lambda_max)
+	# 	molecyl = Chi_square(data, 50)
 
-		L = lambdas[start : end]
-		plt.plot(L, molecyl.f(L, *analysis), "k")
+	# 	analysis = molecyl.find_best(0.7, 1, *Sigma(lambda_zero, mass * const.m_p), lambda_min, lambda_max)
 
-	plt.show()
+	# 	L = lambdas[start : end]
+	# 	plt.plot(L, molecyl.f(L, *analysis), "k")
+
+	# plt.show()
 
