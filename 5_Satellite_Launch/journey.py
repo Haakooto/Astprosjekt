@@ -192,6 +192,7 @@ class Rocket(Rocket):
 		dt = self.system.year_convert_to(dt, "E")
 		print(T0, T1)
 
+
 		nT = round((T1 - T0) / dt)
 
 		t0_idx = np.argmin(abs(self.system.time - T0))
@@ -307,7 +308,7 @@ if __name__ == "__main__":
 	system = SolarSys(seed, path, False, True)
 	Tc = lambda t: system.year_convert_to(t, "E")
 
-	years = 10
+	years = 2
 	dt_pr_yr = 1e-5
 	destination = 1
 
@@ -324,21 +325,32 @@ if __name__ == "__main__":
 
 	Volcano, Epstein = launch.do_launch(Rocket=Rocket, verb=False)
 	launch.change_reference(mission, system, Volcano, Epstein, site, launch_time)
-	mission.verify_manual_orientation(*navigate(system, mission, path))
+	# mission.verify_manual_orientation(*navigate(system, mission, path))
 
 
 	Volcano.begin_interplanetary_journey(system, mission, destination=destination, k=1)
 	# print(travel.remaining_fuel_mass)
+	time = 0.11598196795767118
+	r_pos = np.asarray([0.12979, 0.157862])
+	r_vel = np.asarray([-6.74248, 6.84742])
+	Volcano.teleport(time, r_pos, r_vel)
 
-	dv1 = Volcano.leave_orbit_boost()
-	Volcano.boost(dv1)
-	Volcano.coast(*(0.5, 1e-6))
+	# dv1 = Volcano.leave_orbit_boost()
+	# Volcano.boost(dv1)
+	# Volcano.coast(*(0.5, 1e-6))
 	# travel.boost(dv1)
 	# travel.coast(Tc(0.5))
 
-	shortcut = SMS(mission, [97905])
+	#shortcut = SMS(mission, [97905])
 	# print(Volcano.travel_time, "The traveled time")
-	shortcut.place_spacecraft_in_unstable_orbit(util.yr_to_s(Volcano.travel_time), destination)
+	#shortcut.place_spacecraft_in_unstable_orbit(Volcano.travel_time, destination)
+
+	t_idx = np.argmin(abs(system.time-Volcano.travel_time))
+	R = r_pos - system.d_pos[:, Volcano.dest, t_idx]
+	R *= const.AU
+	
+
+
 	# mission2 = shortcut.mission
 
 	# travel = mission2.begin_interplanetary_travel()
@@ -395,4 +407,3 @@ if __name__ == "__main__":
 	# plt.legend(loc=1)
 	# plt.axis("equal")
 	# plt.show()
-
