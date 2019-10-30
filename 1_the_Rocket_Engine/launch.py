@@ -8,15 +8,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys, os
 
-from engine import Engine
-from rocket import Rocket
-
-sys.path.append(os.path.abspath("../2_Planetary_Orbits"))
-
 import ast2000tools.utils as util
 import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
+
+sys.path.append(os.path.abspath("../2_Planetary_Orbits"))
+# We use SolarSys, inherited from SolarSystem as class for solsys simulations
 from orbits import SolarSys
+from engine import Engine
+from rocket import Rocket
+
 
 seed = 76117
 path = "./../verification_data/"
@@ -29,14 +30,14 @@ N = int(1e5)  # number of particles
 nozzle = 0.25  # nozzle size, as percent of surface
 L = 1e-7  # lengt of box in m
 T = 2800  # temperature in K
-dt_e = 1e-12
+dt_e = 1e-12 # engine
 ts = 1000
 
 # Variables for rocket
 mass = launch_mission.spacecraft_mass  # rocket drymass in kg
 R = launch_system.radii[0] * 1000  # planet radius in m
 M = launch_system.masses[0] * const.m_sun  # planet mass in kg
-dt_r = 0.01
+dt_r = 0.01 #rocket
 
 throttle = 1 / 12  # how much to trottle engine, must be larger than 1
 rocket_area = launch_mission.spacecraft_area
@@ -64,6 +65,11 @@ def do_launch(Rocket=Rocket, verb=True):
 
 
 def change_reference(mission, system, rocket, engine, site=0, T0=0):
+	"""
+	Changes reference from planet-centred to sol-centred, and verifies result
+	Is generalized for launch-site and launch time, as Part 3 stipulates
+	"""
+
 	# site is angle in star reference, 0 is along x-axis
 	# T0 is given in laconia years
 
@@ -124,7 +130,6 @@ if __name__ == "__main__":
 	years = 25.245
 	dt = 1e-4
 
-	# dummy_system.time, dummy_system.d_pos = np.load("planet_trajectories.npy", allow_pickle=True)
 	launch_system.differential_orbits(years, dt)
 
 	Volcano, Epstein = do_launch()
