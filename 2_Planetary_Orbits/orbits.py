@@ -15,12 +15,8 @@ import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
-# sys.path.append(os.path.abspath("../decompiled"))
-# from solar_system import SolarSystem
-
-
-
 class SolarSys(SolarSystem):
+	# SolarSys brukes av de fleste av våre programmer senere, og også for del 1
 	def __init__(self, seed, data_path=None, has_moons=True, verbose=True):
 		SolarSystem.__init__(self, seed, data_path=None, has_moons=True, verbose=True)
 		self.one_year = np.sqrt(self.semi_major_axes[0] ** 3 / self.star_mass)
@@ -32,7 +28,6 @@ class SolarSys(SolarSystem):
 		self.ordered_planets = np.argsort(
 			np.argsort(np.linalg.norm(self.initial_positions, axis=0))
 		)
-		# self.d_pos = np.zeros((2, 1, 1))
 
 	def year_convert_to(self, T, planet="L"):
 		# We kinda screwed the pooch by always using years relative to "our" (Laconias) solar system
@@ -127,7 +122,9 @@ class SolarSys(SolarSystem):
 		self.i_pos = pos
 
 	def plot_orbits(self, array=1, a=False, init=True, final=True):
-		if type(array) is int:
+		if not type(array) is np.ndarray:
+			if array != 1:
+				print("Type of array for plotting not recognized, defaults to d_pos.")
 			array = self.d_pos
 
 		shap = array.shape
@@ -148,7 +145,6 @@ class SolarSys(SolarSystem):
 			"Tellusia",
 			"X",
 		]
-
 		if a:
 			try:
 				self.a_pos
@@ -177,16 +173,11 @@ class SolarSys(SolarSystem):
 		if __name__ == "__main__":
 			plt.show()
 
-	def animate_orbits(self, inn, ut):
+	def animate_orbits(self, inn=0, ut=7):
 		from matplotlib.animation import FuncAnimation, FFMpegWriter
 
 		fig = plt.figure()
 		self.ani_pos = self.d_pos[:, inn:ut+1, :]
-
-		# self.ani_anal_pos = np.transpose(self.a_pos, (0, 2, 1))
-		self.ani_anal_pos = self.a_pos
-		# self.ani_x_data = []
-		# self.ani_y_data = []
 
 		# Configure figure
 		plt.axis("equal")
@@ -202,7 +193,7 @@ class SolarSys(SolarSystem):
 			self._next_frame,
 			frames=range(len(self.time)),
 			repeat=None,
-			interval=1,  # 000 * self.dt,
+			interval=1,
 			blit=True,
 			save_count=100,
 		)
@@ -210,42 +201,23 @@ class SolarSys(SolarSystem):
 		plt.show()
 
 	def _next_frame(self, i):
-		# x_data = [0]
-		# y_data = [0]
-
-		# for p in range(self.number_of_planets):
-		# 	x_data.append(self.ani_pos[0, p, i])
-		# 	y_data.append(self.ani_pos[1, p, i])
-		# 	for s in range(self.ani_anal_pos.shape[1]):
-		# 		x_data.append(self.ani_anal_pos[0, s, p])
-		# 		x_data.append(self.ani_anal_pos[1, s, p])
-
 
 		self.positions.set_data((0, *self.ani_pos[0, :, i]), (0, *self.ani_pos[1, :, i]))
 		self.positions.set_label(("p1", "p2", "p3"))
-		# self.positions.set_data(tuple(x_data), tuple(y_data))
 		return (self.positions,)
 
 
 if __name__ == "__main__":
-	# seed = util.get_seed("haakooto")
 	seed = 76117
 	path = "./../verification_data"
 
 	system = SolarSys(seed, path, False, True)
-	# system = SolarSys(18116)
-	# system = SolarSys(seed)
 
 	years = 30
 	dt = 1e-4
 
-	# print(np.linalg.norm(system.initial_positions, axis=0))
-
-	# system.long_run(years, dt)
-
-	system.analytical_orbits()
+	# system.analytical_orbits()
 	# system.iterated_orbits(years, dt)
-	# system.load_pos(f"pos_{years}yr.npy")
 
 	# system.pos = np.load("pos_100yr.npy")
 	# system.pos = system.pos[:,:,::2]
@@ -255,21 +227,11 @@ if __name__ == "__main__":
 
 	# time, pos = np.load("planet_trajectories.npy", allow_pickle=True)
 
-	# for p in range(7):
-	# 	plt.plot(*pos[:, p, :])
-
-	# import time
-
-	# timer = time.time()
 	system.differential_orbits(years, dt)
-	# t1 = time.time() - timer
-	# print(f"time {years}: {t1}")
-	# timer = time.time()
 
 	system.plot_orbits()
-	system.animate_orbits(0, 7)
+	# system.animate_orbits(0, 7)
 	# np.save(f"npys/pos_{years}yr", system.d_pos)
 
 	# system.verify_planet_positions(years * system.one_year, system.d_pos, f"{path}/planet_trajectories_{years}yr.npy")
-	# print(f"their time: {(time.time() - timer)}")
 	# system.generate_orbit_video(system.t, system.d_pos)
