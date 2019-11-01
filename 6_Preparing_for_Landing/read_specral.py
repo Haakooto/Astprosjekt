@@ -1,5 +1,5 @@
 """
-Program for importere ast og lage grunnlag for de fleste program
+Program for å analysere og simulere atmosfæren
 
 All kode er egenskrevet
 """
@@ -64,7 +64,8 @@ class Chi_square:
 
 
 		permutations = np.transpose(np.asarray(np.meshgrid(Fmin, S, L0)), (1, 2, 3, 0))
-		# don't ask why this works, it just does. Was developed late at night
+		# creates 3d-meshgrid and inverts it such that it is a n*n*n cube
+		# where every element is one set of (Fmin, S, L0) which varies spatially
 
 		R = np.zeros(([self.resolution] * 3))
 		# 3D residual array
@@ -89,8 +90,8 @@ class Atmosphere:
 		self.data = np.asarray(data)
 
 	def Sigma(self, L, mass):
-		tmin = 150
-		tmax = 450
+		tmin = 100
+		tmax = 600
 
 		S = lambda T: L /  const.c * np.sqrt(const.k_B * T / mass)
 		return S(tmin), S(tmax)
@@ -126,9 +127,14 @@ class Atmosphere:
 		self.est_Ts = self.Temp(self.est_lam0s, self.est_sigms, self.Ms * const.m_p)
 		self.est_vel = self.velocity(self.est_lam0s, self.LZs)
 
-		print(self.est_Ts)
+		print(self.LZs - self.est_lam0s)
 		print(self.est_Fmins)
+		print(self.est_sigms)
+		print(self.est_Ts)
 		print(self.est_vel)
+
+	def plot(self):
+		pass
 
 
 
@@ -141,31 +147,11 @@ if __name__ == "__main__":
 	# else:
 		# lambdas, rel_flux, sigmas = load_data()
 
-	# plt.plot(lambdas, rel_flux, "b")
-
 	names = ["O2_1", "O2_2", "O2_3", "H20_1", "H2O_2", "H2O_3", "CO2_1", "CO2_2", "CH4_1", "CH4_2", "CO", "N2O"]
 	masses = [32, 32, 32, 18, 18, 18, 44, 44, 16, 16, 28, 44]
 	lambda_zeros = [632, 690, 760, 720, 820, 940, 1400, 1600, 1660, 2200, 2340, 2870]
 
 	Atmos = Atmosphere(names, masses, lambda_zeros, load_data())
 	Atmos.analyse_data()
-
-	# for name, mass, lambda_zero in zip(names, masses, lambda_zeros):
-	# 	dmax = lambda_zero / 3e+4
-	# 	lambda_min = lambda_zero - dmax
-	# 	lambda_max = lambda_zero + dmax
-
-	# 	start = np.argmin(abs(lambdas - lambda_min))
-	# 	end = np.argmin(abs(lambdas - lambda_max))
-
-	# 	data = [lambdas[start : end], rel_flux[start : end], sigmas[start : end]]
-
-	# 	molecyl = Chi_square(data, 50)
-
-	# 	analysis = molecyl.find_best(0.7, 1, *Sigma(lambda_zero, mass * const.m_p), lambda_min, lambda_max)
-
-	# 	L = lambdas[start : end]
-	# 	plt.plot(L, molecyl.f(L, *analysis), "k")
-
-	# plt.show()
+	Atmos.plot()
 
