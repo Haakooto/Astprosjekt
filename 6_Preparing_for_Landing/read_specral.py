@@ -90,8 +90,8 @@ class Atmosphere:
 		self.data = np.asarray(data)
 
 	def Sigma(self, L, mass):
-		tmin = 100
-		tmax = 600
+		tmin = 150
+		tmax = 450
 
 		S = lambda T: L /  const.c * np.sqrt(const.k_B * T / mass)
 		return S(tmin), S(tmax)
@@ -102,6 +102,16 @@ class Atmosphere:
 	def velocity(self, L, L0):
 		return const.c * (L - L0) / L0
 
+	def find_l_interval(self, lz, mxD=3e+4):
+		Dmax = lz / mxD
+		L_min = lz - Dmax
+		L_max = lz + Dmax
+
+		start = np.argmin(abs(self.data[0] - L_min))
+		end = np.argmin(abs(self.data[0] - L_max))
+
+		return L_min, L_max, start, end
+
 	def analyse_data(self, res=50, mxD=3e+4):
 		self.est_Fmins = np.zeros(self.N)
 		self.est_sigms = np.zeros(self.N)
@@ -111,12 +121,8 @@ class Atmosphere:
 
 		for mass, lz, i in zip(self.Ms, self.LZs, np.arange(self.N)):
 			print(i)
-			Dmax = lz / mxD
-			L_min = lz - Dmax
-			L_max = lz + Dmax
 
-			start = np.argmin(abs(self.data[0] - L_min))
-			end = np.argmin(abs(self.data[0] - L_max))
+			L_min, L_max, start, end = self.find_l_interval(lz)
 
 			data_intervalled = self.data[:, start : end]
 			molecyl = Chi_square(data_intervalled, res)
@@ -134,7 +140,14 @@ class Atmosphere:
 		print(self.est_vel)
 
 	def plot(self):
-		pass
+		for name, lz, i in zip(self.Ns, self.LZs, np.arange(self.N)):
+			L_min, L_max, start, end = self.find_l_interval(lz)
+			lamb_intv = self.data[0, start : end]
+			plt.plot(lamb_intv, self.data[1, start : end])
+			plt.plot(lamb_intv, Chi_square.f(0, lamb_intv, self.est_Fmins[i], self.est_sigms[i], self.est_lam0s[i]))
+			plt.title(name)
+			plt.show()
+
 
 
 
@@ -152,6 +165,6 @@ if __name__ == "__main__":
 	lambda_zeros = [632, 690, 760, 720, 820, 940, 1400, 1600, 1660, 2200, 2340, 2870]
 
 	Atmos = Atmosphere(names, masses, lambda_zeros, load_data())
-	Atmos.analyse_data()
+	Atmos.analyse_data(100)
 	Atmos.plot()
 
