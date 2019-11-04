@@ -29,25 +29,26 @@ P0 = rho0*k*T0/m
 c = T0**(7/5)*(P0)**(-2/5)
 c1 = P0**(2/7)-2*G*m*M/(7*k*c**(5/7)*R)
 r_maks = 4*G*M*m*R/(2*G*M*m-c1*7*k*c**(5/7)*R) - R
+T_maks = 140
 
 def P(r):
-    r_tot = r + R
-    try:
-        if r >= 0:
-            return (2*G*m*M/(7*k*c**(5/7)*r_tot)+c1)**(7/2)
-        else:
-            raise ValueError
-    except ValueError:
-        return "Cannot compute pressure inside planet."
+    if 0 <= r <= r_maks:
+        return (2*G*m*M/(7*k*c**(5/7)*(r+R))+c1)**(7/2)
+    elif r > r_maks:
+        c2 = np.log(P(r_maks)) - G*M*m/(k*T_maks*(r_maks+R))
+        return np.exp(c2+G*M*m/(k*T_maks*(r+R)))
 
 
 def T(r):
-    try:
-        if 0 <= r <= r_maks:
-            return c**(5/7)*P(r)**(2/7)
-        elif r > r_maks:
-            return T(r_maks)
-        else:
-            raise ValueError
-    except ValueError:
-        return "Cannot compute temperature inside planet."
+    if 0 <= r <= r_maks:
+        return c**(5/7)*P(r)**(2/7)
+    elif r > r_maks:
+        return T_maks
+
+Pv = np.vectorize(P)
+Tv = np.vectorize(T)
+rs = np.linspace(0,r_maks+10000, 10000)
+plt.plot(rs, Pv(rs))
+plt.show()
+plt.plot(rs,Tv(rs))
+plt.show()
