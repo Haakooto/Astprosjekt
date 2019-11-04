@@ -19,36 +19,38 @@ seed = util.get_seed(76117)
 system = SolarSystem(seed)
 
 G = const.G
-M = system.masses[1]*const.m_sun
-m = 26.5*const.m_p
+M = system.masses[1] * const.m_sun
+m = 26.5 * const.m_p
 k = const.k_B
-R = system.radii[1]*1000
+R = system.radii[1] * 1000
 rho0 = system.atmospheric_densities[1]
 T0 = 280
-P0 = rho0*k*T0/m
-c = T0**(7/5)*(P0)**(-2/5)
-c1 = P0**(2/7)-2*G*m*M/(7*k*c**(5/7)*R)
-r_maks = 4*G*M*m*R/(2*G*M*m-c1*7*k*c**(5/7)*R) - R
+P0 = rho0 * k * T0 / m
+c = T0 ** (7 / 5) * (P0) ** (-2 / 5)
+c1 = P0 ** (2 / 7) - 2 * G * m * M / (7 * k * c ** (5 / 7) * R)
+r_maks = 4 * G * M * m * R / (2 * G * M * m - c1 * 7 * k * c ** (5 / 7) * R) - R
 T_maks = 140
 
+
 def P(r):
-    if 0 <= r <= r_maks:
-        return (2*G*m*M/(7*k*c**(5/7)*(r+R))+c1)**(7/2)
-    elif r > r_maks:
-        c2 = np.log(P(r_maks)) - G*M*m/(k*T_maks*(r_maks+R))
-        return np.exp(c2+G*M*m/(k*T_maks*(r+R)))
+	if 0 <= r <= r_maks:
+		return (2 * G * m * M / (7 * k * c ** (5 / 7) * (r + R)) + c1) ** (7 / 2)
+	elif r > r_maks:
+		c2 = np.log(P(r_maks)) - G * M * m / (k * T_maks * (r_maks + R))
+		return np.exp(c2 + G * M * m / (k * T_maks * (r + R)))
 
 
 def T(r):
-    if 0 <= r <= r_maks:
-        return c**(5/7)*P(r)**(2/7)
-    elif r > r_maks:
-        return T_maks
+	if 0 <= r <= r_maks:
+		return c ** (5 / 7) * P(r) ** (2 / 7)
+	elif r > r_maks:
+		return T_maks
+
 
 Pv = np.vectorize(P)
 Tv = np.vectorize(T)
-rs = np.linspace(0,r_maks+10000, 10000)
+rs = np.linspace(0, r_maks + 10000, 10000)
 plt.plot(rs, Pv(rs))
 plt.show()
-plt.plot(rs,Tv(rs))
+plt.plot(rs, Tv(rs))
 plt.show()
