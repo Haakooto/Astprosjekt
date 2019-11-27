@@ -78,10 +78,10 @@ class HR_Diagram(object):
         e = 0 if T in step else a * (step[d] - T) / (step[d] - step[d + 1])
         return a * (sum(b) - 1) + e, (np.log10(L) + 4) / 10.0
 
-    def add_star(self, T, L):
+    def add_star(self, T, L, c):
         if self.star == None:
             self.star = []
-        self.star.append(self.TL_to_xy(T, L))
+        self.star.append((self.TL_to_xy(T, L), c))
 
     def add_text(self, string, T, L):
         if self.text == None:
@@ -122,8 +122,13 @@ class HR_Diagram(object):
         )
         if self.star != None:
             for i in range(len(self.star)):
+                col = np.array(self.star[i][1]) / 255
                 ax.scatter(
-                    self.star[i][0], self.star[i][1], s=64, c="red", edgecolor="none"
+                    self.star[i][0][0],
+                    self.star[i][0][1],
+                    s=64,
+                    color=col / col.max(),
+                    edgecolor="none",
                 )
         if self.text != None:
             for i in range(len(self.text)):
@@ -149,7 +154,7 @@ if __name__ == "__main__":
         T = system.star_temperature
         F = const.sigma * T ** 4
         L = F * 4 * np.pi * (system.star_radius * 1000) ** 2 / L_sun
-        Example.add_star(T=T, L=L)
+        Example.add_star(T=T, L=L, c=system.star_color)
 
     # add text to the plot
     Example.add_text("Main Sequence", T=2e4, L=10 ** 3.1)
