@@ -46,11 +46,19 @@ def T(r):
 	elif r > r_maks:
 		return T_maks
 
-
 Pv = np.vectorize(P)
 Tv = np.vectorize(T)
-rs = np.linspace(0, r_maks + 10000, 10000)
-plt.plot(rs, Pv(rs))
-plt.show()
-plt.plot(rs, Tv(rs))
-plt.show()
+
+def density(r):
+	return Pv(r) * m / k / Tv(r)
+
+
+
+if __name__ == "__main__":
+	rs = np.linspace(0, r_maks + 10000, 10000)
+	plt.plot(rs, Pv(rs))
+	plt.show()
+	plt.plot(rs, Tv(rs))
+	plt.show()
+	plt.plot(rs, density(rs))
+	plt.show()
