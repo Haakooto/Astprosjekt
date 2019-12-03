@@ -50,7 +50,7 @@ Pv = np.vectorize(P)
 Tv = np.vectorize(T)
 
 def density(h):
-	if h < 200000:
+	if h < 300000:
 		return Pv(h) * m / k / Tv(h)
 	else: return 0
 

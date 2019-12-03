@@ -70,7 +70,7 @@ class Landing:
 		if np.linalg.norm(r) <= self.R:
 			return np.zeros(3)
 		else:
-			F = self.gravity(r) + self.F_d(r, v)
+			F = self.m * self.gravity(r) + self.F_d(r, v)
 			return F / self.m
 
 	def rhs(self, t, u):
@@ -147,7 +147,6 @@ if __name__ == "__main__":
 	r0 = r_pos - p_pos
 	r0 = np.array([*r0, 0]) * const.AU
 	v0 = Volcano.vel - p_vel
-	v0 = np.array([-0.3, 0.3])
 	v0 = np.array([*v0, 0]) * const.AU / const.yr
 
 	landing = Landing(r0, v0, Volcano.travel_time, system, Volcano)
