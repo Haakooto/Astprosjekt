@@ -84,12 +84,12 @@ class Rocket(Rocket):
 
 		self.dest = destination
 		self.k = k
-		self.verbose = verbose
+		self.verb = verbose
 
 		self.Masses = np.concatenate(([system.star_mass], system.masses))
 
 	def teleport(self, t, pos, vel):
-		if self.verbose:
+		if self.verb:
 			print("Teleporting")
 		self.travel_time = t
 		# self.pos = np.concatenate((self.pos, np.transpose([pos])), axis=1)
@@ -135,7 +135,7 @@ class Rocket(Rocket):
 		extra planetpos is found by linear interpolate, np.repeat
 		changing dt changes answer
 		"""
-		if self.verbose:
+		if self.verb:
 			print(f"Coasting for {time} years")
 		def rddot(t, r):
 			"""
@@ -252,7 +252,7 @@ class Rocket(Rocket):
 				self.fuel -= self.fuel_use(dv)
 			else:
 				new_vel = self.vel * dv
-				if self.verbose:
+				if self.verb:
 					print(f"Boost by float, dv = {new_vel - self.vel} AU/y")
 				self.fuel -= self.fuel_use(abs(new_vel - self.vel))
 				self.vel = new_vel
