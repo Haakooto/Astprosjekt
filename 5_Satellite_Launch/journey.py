@@ -247,7 +247,8 @@ class Rocket(Rocket):
 			try:
 				dv = float(dv)
 			except:
-				print(f"Boost by array, dv = {dv} AU/yr")
+				if self.verb:
+					print(f"Boost by array, dv = {dv} AU/yr")
 				self.vel += dv
 				self.fuel -= self.fuel_use(dv)
 			else:
