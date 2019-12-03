@@ -25,9 +25,6 @@ from rocket import Rocket
 
 import ast2000tools.utils as util
 import ast2000tools.constants as const
-# sys.path.append(os.path.abspath("../decompiled"))
-# from space_mission import SpaceMission
-
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
@@ -71,11 +68,12 @@ class SolarSys(SolarSys):
 
 
 class Rocket(Rocket):
-	def begin_interplanetary_journey(self, system, mission, destination, k=10):
+	def begin_interplanetary_journey(self, system, mission, destination, k=10, verbose=True):
 		"""
 		Initiate travel phase
 		"""
-		print("\nStarting interplanetary travel\n")
+		if verbose: 
+			print("\nStarting interplanetary travel\n")
 
 		self.system = system
 		self.mission = mission
@@ -86,11 +84,13 @@ class Rocket(Rocket):
 
 		self.dest = destination
 		self.k = k
+		self.verbose = verbose
 
 		self.Masses = np.concatenate(([system.star_mass], system.masses))
 
 	def teleport(self, t, pos, vel):
-		print("Teleporting")
+		if self.verbose:
+			print("Teleporting")
 		self.travel_time = t
 		# self.pos = np.concatenate((self.pos, np.transpose([pos])), axis=1)
 		self.pos = np.transpose([pos])
@@ -135,7 +135,8 @@ class Rocket(Rocket):
 		extra planetpos is found by linear interpolate, np.repeat
 		changing dt changes answer
 		"""
-		print(f"Coasting for {time} years")
+		if self.verbose:
+			print(f"Coasting for {time} years")
 		def rddot(t, r):
 			"""
 			Calculate acceleration of spacecraft at time t and position r
@@ -251,7 +252,8 @@ class Rocket(Rocket):
 				self.fuel -= self.fuel_use(dv)
 			else:
 				new_vel = self.vel * dv
-				print(f"Boost by float, dv = {new_vel - self.vel} AU/y")
+				if self.verbose:
+					print(f"Boost by float, dv = {new_vel - self.vel} AU/y")
 				self.fuel -= self.fuel_use(abs(new_vel - self.vel))
 				self.vel = new_vel
 		finally:
@@ -325,8 +327,8 @@ if __name__ == "__main__":
 
 	Volcano, Epstein = launch.do_launch(Rocket=Rocket, verb=False)
 	launch.change_reference(mission, system, Volcano, Epstein, site, launch_time)
-	# mission.verify_manual_orientation(*navigate(system, mission, path))
-
+	mission.verify_manual_orientation(*navigate(system, mission, path))
+	sys.exit()
 
 	Volcano.begin_interplanetary_journey(system, mission, destination=destination, k=1)
 	# print(travel.remaining_fuel_mass)
@@ -341,13 +343,14 @@ if __name__ == "__main__":
 	# travel.boost(dv1)
 	# travel.coast(Tc(0.5))
 
-	#shortcut = SMS(mission, [97905])
+	# shortcut = SMS(mission, [97905])
 	# print(Volcano.travel_time, "The traveled time")
-	#shortcut.place_spacecraft_in_unstable_orbit(Volcano.travel_time, destination)
+	# shortcut.place_spacecraft_in_unstable_orbit(Volcano.travel_time, destination)
 
 	t_idx = np.argmin(abs(system.time-Volcano.travel_time))
 	R = r_pos - system.d_pos[:, Volcano.dest, t_idx]
 	R *= const.AU
+	print(R)
 	
 
 
