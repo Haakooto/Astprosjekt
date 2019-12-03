@@ -127,7 +127,17 @@ class HR_Diagram(object):
 				)
 		if self.text != None:
 			for i in range(len(self.text)):
-				ax.text(self.text[i][0], self.text[i][1], self.text[i][2], fontsize=12)
+				ax.text(self.text[i][0],self.text[i][1],self.text[i][2],fontsize=12)
+
+		for i in range(len(self.star)-1):
+			starn = np.array(self.star[i+1])
+			star = np.array(self.star[i])
+			short = 0.02/np.linalg.norm(starn-star)*(starn - star)
+			startpoint = star + short
+			vec = starn - star - 2*short
+			ax.arrow(startpoint[0], startpoint[1] - 0.006*vec[0]/np.linalg.norm(vec), vec[0], vec[1], length_includes_head = True, head_width = 0.018, color = "k")
+			t_loc = startpoint + 0.6*vec + 0.02/np.linalg.norm(vec)*np.array([vec[1], -1.8*vec[0]])
+			ax.text(t_loc[0], t_loc[1], "%d" %(i+1))
 		plt.savefig(filename)
 		plt.show()
 
@@ -136,28 +146,36 @@ if __name__ == "__main__":
 	seed = 76117
 	system = SolarSystem(seed)
 	T = system.star_temperature
-	F = const.sigma * T ** 4
-	L = F * 4 * np.pi * (system.star_radius * 1000) ** 2
-	L_sun = 3.828e26
-	L = L / L_sun
-	T_sun = 1e10
-	T_life = 1 / (system.star_mass) ** 3 * T_sun
-	print("Lifetime: %d billion years" % round(T_life / 1e9))
+	F = const.sigma*T**4
+	L = F*4*np.pi*(system.star_radius*1000)**2
+	L_sun = 3.828E26
+	L = L/L_sun
+	T_sun = 1E10
+	T_life = 1/(system.star_mass)**3*T_sun
+	T_life2 = 0.1*system.star_mass*const.m_sun*const.c**2*0.007/(L*L_sun*const.yr)
 
 	# initialize HR Diagram
 	Example = HR_Diagram()
 
 	# define star parameters
-	Example.star_parameters(s=4.0, MS_N=800, WD_N=80, RG_N=200, SG_N=60)
+	Example.star_parameters(s=4.,MS_N=800,WD_N=80,RG_N=200,SG_N=60)
 
 	# add a highlighted star to the plot
-	Example.add_star(T=T, L=L)
+	Example.add_star(T=T,L=L*0.06)
+	Example.add_star(T=0.9*T, L = 10*L)
+	Example.add_star(T=0.9*0.95*T, L=10*100*L)
+	Example.add_star(T=0.9*0.95*1.5*T, L=10*100*0.1*L)
+	Example.add_star(T=0.9*0.95*1.5*1.3*T, L=10*100*0.1*L)
+	Example.add_star(T=0.9*0.95*1.5*T, L=10*100*0.1*L)
+	Example.add_star(T=0.9*0.95*1.5*1.02*T, L=10*100*0.1*500*L)
+	Example.add_star(T=0.9*0.95*1.5*1.02*2.5*T, L=10*100*0.1*500*0.3*L)
+	Example.add_star(T=0.9*0.95*1.5*1.02*2.5*0.92*T, L=10*100*0.1*500*0.3*0.000003*L)
 
 	# add text to the plot
-	Example.add_text("Main Sequence", T=2e4, L=10 ** 3.1)
-	Example.add_text("White Dwarfs", T=3e4, L=10 ** -1.4)
-	Example.add_text("Red Giants", T=5e3, L=10 ** 0.4)
-	Example.add_text("Super Giants", T=7e3, L=10 ** 4.2)
+	Example.add_text("Main Sequence",T=2e4,L=10**3.1)
+	Example.add_text("White Dwarfs", T=3e4,L=10**-1.4)
+	Example.add_text("Red Giants",   T=5e3,L=10**1.8)
+	Example.add_text("Super Giants", T=7e3,L=10**4.2)
 
 	# generate final diagram
-	Example.generate_diagram()
+	Example.generate_diagram(title="The sun's dying journey", filename = "HR_diagram_2.png")
