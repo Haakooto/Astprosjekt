@@ -49,8 +49,12 @@ def T(r):
 Pv = np.vectorize(P)
 Tv = np.vectorize(T)
 
-def density(r):
-	return Pv(r) * m / k / Tv(r)
+def density(h):
+	if h < 200000:
+		return Pv(h) * m / k / Tv(h)
+	else: return 0
+
+densityv = np.vectorize(density)
 
 
 
