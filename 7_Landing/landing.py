@@ -102,6 +102,7 @@ class Landing:
 	def plot(self):
 		x, y, z = self.r
 		plt.plot(x, y)
+		plt.axis("equal")
 		plt.show()
 
 

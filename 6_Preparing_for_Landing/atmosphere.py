@@ -64,5 +64,5 @@ if __name__ == "__main__":
 	plt.show()
 	plt.plot(rs, Tv(rs))
 	plt.show()
-	plt.plot(rs, density(rs))
+	plt.plot(rs, densityv(rs))
 	plt.show()
