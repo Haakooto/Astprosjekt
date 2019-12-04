@@ -53,7 +53,7 @@ class Landing:
 	def deploy(self):
 		self.parachute_deployed = True
 
-	def free_fall(self, T, dt):
+	def free_fall(self, T, dt=1e-3):
 		def F_d(r, v):
 			C_d = 1
 			if self.parachute_deployed:
@@ -122,8 +122,14 @@ class Landing:
 			v_rad = (h1 - h0) / (result.t[-1] - result.t[-2])
 			print(f"radial velocity is {v_rad}")
 
-	def slow_down(self, v):
-		self.v *= v
+	def boost(self, v):
+		self.v += v
+
+	def orient(self):
+		print(f"Time: {self.t}")
+		print(f"Position: {self.r[:, -1]}")
+		print(f"Velocity: {self.v}")
+		return self.t, self.r[:, -1], self.v
 
 	def plot(self):
 		h = np.linspace(0, 2 * np.pi, 1000)
@@ -142,7 +148,7 @@ class Landing:
 		plt.plot(time, height)
 		plt.show()
 
-def enter_stable_orbit_boost(r0, v0, system, dest):
+def stabilize_orbit(r0, v0, system, dest):
 	r = np.linalg.norm(r0)
 	t_tang_normed = np.array([-r0[1], r0[0], r0[2]]) / r
 
@@ -188,7 +194,7 @@ if __name__ == "__main__":
 
 	lander = mission.begin_landing_sequence(mission)
 	t0, r0, v0 = lander.orient()
-	boost = enter_stable_orbit_boost(r0, v0, system, destination)
+	boost = stabilize_orbit(r0, v0, system, destination)
 	lander.boost(boost)
 	t0, r0, v0 = lander.orient()
 
@@ -196,9 +202,20 @@ if __name__ == "__main__":
 	# Dont do anything above this
 
 
-	landing.slow_down(0.9)
-	for _ in range(10):
-		landing.free_fall(1e4, 1e-3)
+	lander.adjust_parachute_area(landing.parachute_area)
+
+	lander.boost(-v0*0.1)
+	landing.boost(-v0*0.1)
+
+	lander.fall(100)
+	landing.free_fall(100)
+
+	lander.orient()
+	landing.orient()
+
+	# landing.slow_down(0.9)
+	# for _ in range(10):
+		# landing.free_fall(1e4)
 	# for _ in range(2):
 		# landing.free_fall(1e4, 1e-3)
 	# landing.deploy()
@@ -209,6 +226,6 @@ if __name__ == "__main__":
 	# print(f"time: {tim.time() - alltimer}")
 
 	# print(landing.t)
-	landing.plot()
+	# landing.plot()
 
 
