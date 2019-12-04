@@ -14,7 +14,7 @@ from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
 
-seed = util.get_seed(76117)
+seed = 76117
 
 system = SolarSystem(seed)
 
@@ -49,8 +49,12 @@ def T(r):
 Pv = np.vectorize(P)
 Tv = np.vectorize(T)
 
-def density(r):
-	return Pv(r) * m / k / Tv(r)
+def density(h):
+	if h < 300000:
+		return Pv(h) * m / k / Tv(h)
+	else: return 0
+
+densityv = np.vectorize(density)
 
 
 
@@ -60,5 +64,5 @@ if __name__ == "__main__":
 	plt.show()
 	plt.plot(rs, Tv(rs))
 	plt.show()
-	plt.plot(rs, density(rs))
+	plt.plot(rs, densityv(rs))
 	plt.show()
