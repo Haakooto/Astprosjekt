@@ -27,6 +27,8 @@ import ast2000tools.utils as util
 import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
+from ast2000tools.shortcuts import SpaceMissionShortcuts as SMS
+
 
 
 class Landing:
@@ -108,6 +110,18 @@ class Landing:
 		self.t = t[-1]
 		plt.scatter(self.r[0, -1], self.r[1, -1])
 
+		# self.did_we_crash(faller)
+
+	def did_we_crash(self, result):
+		succ = result.status
+		if succ == 1:
+			print(f"We are at ground, with velocity {self.v}")
+			h0 = np.linalg.norm(self.r[:, -2])
+			h1 = np.linalg.norm(self.r[:, -1])
+			print(result.t)
+			v_rad = (h1 - h0) / (result.t[-1] - result.t[-2])
+			print(f"radial velocity is {v_rad}")
+
 	def slow_down(self, v):
 		self.v *= v
 
@@ -117,14 +131,34 @@ class Landing:
 		y = self.R * np.sin(h)
 		plt.plot(x, y)
 
-		x, y, z = self.r[:, ::100]
+		cut = 100
+		x, y, z = self.r[:, ::cut]
 		plt.plot(x, y)
 		plt.axis("equal")
 		plt.show()
 
+		time = np.linspace(0, self.t, len(x))
+		height = np.linalg.norm(self.r[:, ::cut], axis=0) - self.R
+		plt.plot(time, height)
+		plt.show()
+
+def enter_stable_orbit_boost(r0, v0, system, dest):
+	r = np.linalg.norm(r0)
+	t_tang_normed = np.array([-r0[1], r0[0], r0[2]]) / r
+
+	vpm = np.sqrt(const.G * system.masses[dest] * const.m_sun / r) * t_tang_normed
+
+	return vpm - v0
 
 if __name__ == "__main__":
-	alltimer = tim.time()
+	"""
+	Initialize everything from scratch
+	make system and mission
+	launch and verify
+	use shortcut to record destination
+	begin landings
+	stabilize orbit
+	"""
 	seed = 76117
 	path = "./../verification_data"
 	system = SolarSys(seed, path, False, True)
@@ -144,66 +178,37 @@ if __name__ == "__main__":
 	launch.change_reference(mission, system, Volcano, Epstein, launch_site, launch_time)
 	mission.verify_manual_orientation(*navigate(system, mission, path))
 
-	time = 0.11598196795767118
-	r_pos = np.asarray([0.12979, 0.157862])
-	r_vel = np.asarray([-6.74248, 6.84742])
 	Volcano.begin_interplanetary_journey(
 		system, mission, destination=destination, verbose=False
 	)
-	Volcano.teleport(time, r_pos, r_vel)
-	Volcano.boost(Volcano.enter_stable_orbit_boost())
 
-	"""
-	To have accurate planet position and velocity at time we use
-	methods from SolarSystem found by using dir(SolarSystem),
-	and guessed based on name which parameters the methods took.
-	We did this to save time by not having to calculate it ourself
-	each time we ran code, and accuracy
-	"""
-	p_pos = system._compute_single_planet_position(time, destination)
-	p_vel = system._compute_single_planet_velocity(time, destination)
+	time = 0.11598196795767118
+	shortcut = SMS(mission, [97905])
+	shortcut.place_spacecraft_in_unstable_orbit(time, destination)
 
-	r0 = r_pos - p_pos
-	r0 = np.array([*r0, 0]) * const.AU
-	v0 = Volcano.vel - p_vel
-	v0 = np.array([*v0, 0]) * const.AU / const.yr
+	lander = mission.begin_landing_sequence(mission)
+	t0, r0, v0 = lander.orient()
+	boost = enter_stable_orbit_boost(r0, v0, system, destination)
+	lander.boost(boost)
+	t0, r0, v0 = lander.orient()
 
 	landing = Landing(r0, v0, system, Volcano)
-	timer = tim.time()
+	# Dont do anything above this
 
-	for _ in range(2):
-		landing.free_fall(1e4, 1e-3)
-		landing.slow_down(0.9)
-	for _ in range(2):
-		landing.free_fall(1e4, 1e-3)
-	landing.deploy()
+
 	landing.slow_down(0.9)
-	for _ in range(5):
+	for _ in range(10):
 		landing.free_fall(1e4, 1e-3)
-	print(f"time: {tim.time() - timer}")
-	print(f"time: {tim.time() - alltimer}")
+	# for _ in range(2):
+		# landing.free_fall(1e4, 1e-3)
+	# landing.deploy()
+	# landing.slow_down(0.9)
+	# for _ in range(5):
+		# landing.free_fall(1e4, 1e-3)
+	# print(f"time: {tim.time() - timer}")
+	# print(f"time: {tim.time() - alltimer}")
 
+	# print(landing.t)
 	landing.plot()
 
-	# R = system.radii[1]*1000
-	# def F_d(A, r, v, C_d=1):
-	#     omega = 2*np.pi/(system.rotational_periods[1]*const.day)
-	#     w = omega*np.asarray([-r[1], r[0], 0])
-	#     v_d = v - w
-	#     dens = density(np.linalg.norm(r) - R)
-	#     return 1/2*dens*C_d * A*np.linalg.norm(v_d)*(-v_d)
-
-	# r0 = np.asarray([500000 + R, 0, 0])
-	# v0 = np.asarray([2000, 0, 0])
-
-	# A = 2*const.G*system.masses[1]*const.m_sun*mission.lander_mass/(system.atmospheric_densities[1]*(3*R)**2)
-
-	# launch_time = 0.75
-	# site = 0
-	# destination = 1
-	# Volcano, Epstein = launch.do_launch(Rocket=Rocket, verb=False)
-	# launch.change_reference(mission, system, Volcano, Epstein, site, launch_time)
-	# mission.verify_manual_orientation(*navigate(system, mission, path))
-	# Volcano.begin_interplanetary_journey(system, mission, destination=destination, k=1)
-	# mission.begin_landing_sequence()
 
