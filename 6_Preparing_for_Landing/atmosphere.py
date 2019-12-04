@@ -14,7 +14,7 @@ from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
 
-seed = util.get_seed(76117)
+seed = 76117
 
 system = SolarSystem(seed)
 
