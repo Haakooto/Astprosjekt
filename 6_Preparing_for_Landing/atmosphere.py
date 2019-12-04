@@ -50,11 +50,7 @@ Pv = np.vectorize(P)
 Tv = np.vectorize(T)
 
 def density(h):
-	if h < 300000:
 		return Pv(h) * m / k / Tv(h)
-	else: return 0
-
-densityv = np.vectorize(density)
 
 
 
@@ -64,5 +60,5 @@ if __name__ == "__main__":
 	plt.show()
 	plt.plot(rs, Tv(rs))
 	plt.show()
-	plt.plot(rs, densityv(rs))
+	plt.plot(rs, density(rs))
 	plt.show()

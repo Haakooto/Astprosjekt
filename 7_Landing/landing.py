@@ -21,7 +21,7 @@ import launch
 from orbits import SolarSys
 from navigate import navigate
 from journey import Rocket
-from atmosphere import densityv
+from atmosphere import density
 
 import ast2000tools.utils as util
 import ast2000tools.constants as const
@@ -54,7 +54,7 @@ class Landing:
 		omega = 2 * np.pi / (self.sys.rotational_periods[self.mis.dest] * const.day)
 		w = omega * np.asarray([-r[1], r[0], 0])
 		v_d = v - w
-		dens = densityv(np.linalg.norm(r) - self.R)
+		dens = density(np.linalg.norm(r) - self.R)
 		return dens / 2 * C_d * A * np.linalg.norm(v_d) * (-v_d)
 
 	def surface(self):
