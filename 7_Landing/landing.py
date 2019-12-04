@@ -30,10 +30,10 @@ from ast2000tools.solar_system import SolarSystem
 
 
 class Landing:
-	def __init__(self, r0, v0, t0, system, mission):
-		self.r = np.transpose(r0.reshape((1,3)))
-		self.v = np.transpose(v0.reshape((1,3)))
-		self.t = np.asarray(t0).reshape((1,))
+	def __init__(self, r0, v0, system, mission):
+		self.r = r0.reshape((1, 3)).T
+		self.v = v0
+		self.t = 0
 
 		self.sys = system
 		self.mis = mission
@@ -44,52 +44,60 @@ class Landing:
 		self.rho_at_0 = self.sys.atmospheric_densities[self.mis.dest]
 
 		self.parachute_deployed = False
+		self.parachute_area = (
+			2 * const.G * self.M * self.m / (self.rho_at_0 * (3 * self.R) ** 2)
+		)
 
-	def F_d(self, r, v):
-		C_d = 1
-		if self.parachute_deployed:
-			A = 2 * const.G * self.M * self.m / (self.rho_at_0 * (3 * self.R) ** 2)
-		else:
-			A = self.sys.mission.lander_area
-		omega = 2 * np.pi / (self.sys.rotational_periods[self.mis.dest] * const.day)
-		w = omega * np.asarray([-r[1], r[0], 0])
-		v_d = v - w
-		dens = density(np.linalg.norm(r) - self.R)
-		return dens / 2 * C_d * A * np.linalg.norm(v_d) * (-v_d)
-
-	def surface(self):
-		h = np.linspace(0, 2 * np.pi, 1000)
-		x = self.R * np.cos(h)
-		y = self.R * np.sin(h)
-		plt.plot(x, y)
-
-	def gravity(self, r):
-		return -r * const.G * self.M * np.linalg.norm(r) ** -3
-
-	def rddot(self, r, v):
-		if np.linalg.norm(r) <= self.R:
-			return np.zeros(3)
-		else:
-			F = self.gravity(r) + self.F_d(r, v)
-			return F / self.m
-
-	def rhs(self, t, u):
-		r = u[:3]
-		v = u[3:]
-		dr = v
-		dv = self.rddot(r, v)
-		return np.concatenate((dr, dv))
+	def deploy(self):
+		self.parachute_deployed = True
 
 	def free_fall(self, T, dt):
+		def F_d(r, v):
+			C_d = 1
+			if self.parachute_deployed:
+				A = self.parachute_area
+			else:
+				A = self.sys.mission.lander_area
+			omega = 2 * np.pi / (self.sys.rotational_periods[self.mis.dest] * const.day)
+			w = omega * np.asarray([-r[1], r[0], 0])
+			v_d = v - w
+			dens = density(np.linalg.norm(r) - self.R)
+			return dens / 2 * C_d * A * np.linalg.norm(v_d) * (-v_d)
+
+		def gravity(r):
+			return -r * const.G * self.M * np.linalg.norm(r) ** -3
+
+		def rddot(r, v):
+			if np.linalg.norm(r) <= self.R:
+				return np.zeros(3)
+			else:
+				a = gravity(r) + F_d(r, v)
+				return a
+
+		def at_surface(t, u):
+			r = u[:3]
+			R = np.linalg.norm(r)
+			return R - self.R
+
+		at_surface.terminal = True
+
+		def rhs(t, u):
+			r = u[:3]
+			v = u[3:]
+			dr = v
+			dv = rddot(r, v)
+			return np.concatenate((dr, dv))
+
 		nT = int(T / dt)
 
-		t = np.linspace(self.t[-1], T, nT, endpoint=False)
-		t0 = t[0]
+		t = np.linspace(self.t, self.t + T, nT, endpoint=False)
 		r0 = self.r[:, -1]
-		v0 = self.v[:, -1]
+		v0 = self.v
 
 		u0 = np.concatenate((r0, v0))
-		faller = solve_ivp(self.rhs, (t0, T), u0, t_eval=t)
+		faller = solve_ivp(
+			rhs, (t[0], t[-1]), u0, t_eval=t, events=at_surface, atol=1e-6, rtol=1e-6
+		)
 
 		falled = faller.y
 
@@ -97,15 +105,26 @@ class Landing:
 
 		self.r = np.concatenate((self.r, r), axis=1)
 		self.v = v[:, -1]
-		self.t = np.concatenate((self.t, t))
+		self.t = t[-1]
+		plt.scatter(self.r[0, -1], self.r[1, -1])
+
+	def slow_down(self, v):
+		self.v *= v
 
 	def plot(self):
-		x, y, z = self.r
+		h = np.linspace(0, 2 * np.pi, 1000)
+		x = self.R * np.cos(h)
+		y = self.R * np.sin(h)
 		plt.plot(x, y)
+
+		x, y, z = self.r[:, ::100]
+		plt.plot(x, y)
+		plt.axis("equal")
 		plt.show()
 
 
 if __name__ == "__main__":
+	alltimer = tim.time()
 	seed = 76117
 	path = "./../verification_data"
 	system = SolarSys(seed, path, False, True)
@@ -125,21 +144,21 @@ if __name__ == "__main__":
 	launch.change_reference(mission, system, Volcano, Epstein, launch_site, launch_time)
 	mission.verify_manual_orientation(*navigate(system, mission, path))
 
-
 	time = 0.11598196795767118
 	r_pos = np.asarray([0.12979, 0.157862])
 	r_vel = np.asarray([-6.74248, 6.84742])
-	Volcano.begin_interplanetary_journey(system, mission, destination=destination, verbose=False)
+	Volcano.begin_interplanetary_journey(
+		system, mission, destination=destination, verbose=False
+	)
 	Volcano.teleport(time, r_pos, r_vel)
 	Volcano.boost(Volcano.enter_stable_orbit_boost())
-
 
 	"""
 	To have accurate planet position and velocity at time we use
 	methods from SolarSystem found by using dir(SolarSystem),
 	and guessed based on name which parameters the methods took.
 	We did this to save time by not having to calculate it ourself
-	each time we ran code
+	each time we ran code, and accuracy
 	"""
 	p_pos = system._compute_single_planet_position(time, destination)
 	p_vel = system._compute_single_planet_velocity(time, destination)
@@ -147,16 +166,24 @@ if __name__ == "__main__":
 	r0 = r_pos - p_pos
 	r0 = np.array([*r0, 0]) * const.AU
 	v0 = Volcano.vel - p_vel
-	v0 = np.array([-0.3, 0.3])
 	v0 = np.array([*v0, 0]) * const.AU / const.yr
 
-	landing = Landing(r0, v0, Volcano.travel_time, system, Volcano)
-	landing.free_fall(10000, 1e-4)
-	landing.surface()
+	landing = Landing(r0, v0, system, Volcano)
+	timer = tim.time()
+
+	for _ in range(2):
+		landing.free_fall(1e4, 1e-3)
+		landing.slow_down(0.9)
+	for _ in range(2):
+		landing.free_fall(1e4, 1e-3)
+	landing.deploy()
+	landing.slow_down(0.9)
+	for _ in range(5):
+		landing.free_fall(1e4, 1e-3)
+	print(f"time: {tim.time() - timer}")
+	print(f"time: {tim.time() - alltimer}")
+
 	landing.plot()
-
-
-
 
 	# R = system.radii[1]*1000
 	# def F_d(A, r, v, C_d=1):
@@ -179,3 +206,4 @@ if __name__ == "__main__":
 	# mission.verify_manual_orientation(*navigate(system, mission, path))
 	# Volcano.begin_interplanetary_journey(system, mission, destination=destination, k=1)
 	# mission.begin_landing_sequence()
+
