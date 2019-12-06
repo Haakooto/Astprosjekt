@@ -68,8 +68,7 @@ class non_linear_reg:
 			ri = self.residual(self.t, self.data, *Bs)
 
 			if abs(ri.max() - worst) < 1e-15:
-				print(i)
-				print("tol level reached")
+				print(f"{i} iterations used to read desired tolerance level")
 				break
 
 			try:

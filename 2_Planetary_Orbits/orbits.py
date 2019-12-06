@@ -170,8 +170,8 @@ class SolarSys(SolarSystem):
 		plt.ylabel("y, [AU]", fontsize=20)
 		plt.legend(loc=1, fontsize=15)
 
-		if __name__ == "__main__":
-			plt.show()
+		# if __name__ == "__main__":
+		# 	plt.show()
 
 	def animate_orbits(self, inn=0, ut=7):
 		from matplotlib.animation import FuncAnimation, FFMpegWriter
@@ -182,7 +182,7 @@ class SolarSys(SolarSystem):
 		# Configure figure
 		plt.axis("equal")
 		plt.axis("off")
-		xmax = 2 * np.max(abs(self.ani_pos))
+		xmax = np.max(abs(self.ani_pos))
 		plt.axis((-xmax, xmax, -xmax, xmax))
 
 		# Make an "empty" plot object to be updated throughout the animation
@@ -198,40 +198,58 @@ class SolarSys(SolarSystem):
 			save_count=100,
 		)
 
-		plt.show()
-
 	def _next_frame(self, i):
 
 		self.positions.set_data((0, *self.ani_pos[0, :, i]), (0, *self.ani_pos[1, :, i]))
 		self.positions.set_label(("p1", "p2", "p3"))
 		return (self.positions,)
 
+def verify(yrs=20):
+	print("Verifying orbits")
+	years = yrs
+	dt = 1e-4
+
+	system.analytical_orbits()
+	system.differential_orbits(years, dt)
+
+	system.verify_planet_positions(years * system.one_year, system.d_pos, f"{path}/planet_trajectories_{years}yr.npy")
+	system.generate_orbit_video(system.time, system.d_pos)
+
+def show_orbits(yrs=30):
+	print("\nPlotting orbits")
+	years = yrs
+	dt = 1e-4
+
+	system.analytical_orbits()
+	system.differential_orbits(years, dt)
+	system.plot_orbits(a=True)
+	plt.show()
+
+def do_iterated(yrs=10):
+	print("\nPlotting orbits calculated different way")
+	years = yrs
+	dt = 1e-4
+
+	system.iterated_orbits(years, dt)
+	system.plot_orbits(system.i_pos)
+	plt.show()
+
+def animate(yrs=20):
+	print("\nAnimating orbits")
+	years = yrs
+	dt = 1e-3
+
+	system.differential_orbits(years, dt)
+	system.animate_orbits()
+	plt.show()
+
 
 if __name__ == "__main__":
 	seed = 76117
 	path = "./../verification_data"
-
 	system = SolarSys(seed, path, False, True)
 
-	years = 30
-	dt = 1e-4
-
-	# system.analytical_orbits()
-	# system.iterated_orbits(years, dt)
-
-	# system.pos = np.load("pos_100yr.npy")
-	# system.pos = system.pos[:,:,::2]
-
-	# system.d_pos = np.load(f"./npys/pos_{years}yr.npy")
-	# system.t = np.linspace(0, years * system.one_year, len(system.d_pos[0][0]))
-
-	# time, pos = np.load("planet_trajectories.npy", allow_pickle=True)
-
-	system.differential_orbits(years, dt)
-
-	system.plot_orbits()
-	# system.animate_orbits(0, 7)
-	# np.save(f"npys/pos_{years}yr", system.d_pos)
-
-	# system.verify_planet_positions(years * system.one_year, system.d_pos, f"{path}/planet_trajectories_{years}yr.npy")
-	# system.generate_orbit_video(system.t, system.d_pos)
+	verify()
+	show_orbits()
+	do_iterated()
+	animate()
