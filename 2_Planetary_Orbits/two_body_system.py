@@ -165,7 +165,7 @@ class SolarSys(SolarSystem):
 			self.one_year
 
 		try:
-			info = np.array([self.radii[self.la_idx], self.p_mass, self.star_mass])
+			info = np.array([self.p_mass, self.radii[self.la_idx], self.star_radius, self.star_mass])
 			np.save("npys/info.npy", info)
 		except:
 			self.one_year
@@ -177,17 +177,17 @@ def planet_mass(vs, P, ms, i=np.pi/2):
 
 
 if __name__ == "__main__":
-	seed = util.get_seed("haakooto")
+	seed = 76117
 
 	system = SolarSys(seed)
 
 	yrs = 40
 	dt = 1e-4
 
-	# system.two_body_system(yrs, dt)
-	# system.plot_two_pos()
-	# system.energy_conserve()
-	# system.radial_vel(i=2*np.pi/3)
+	system.two_body_system(yrs, dt)
+	system.plot_two_pos()
+	system.energy_conserve()
+	system.radial_vel(i=2*np.pi/3)
 	system.light_curve()
 	system.assemble_data()
 
