@@ -135,7 +135,8 @@ class Landing:
 		h = np.linspace(0, 2 * np.pi, 1000)
 		x = self.R * np.cos(h)
 		y = self.R * np.sin(h)
-		plt.plot(x, y)
+		plt.plot(x, y, color="g")
+		plt.fill(x, y, color="g")
 
 		cut = 100
 		x, y, z = self.r[:, ::cut]
@@ -226,6 +227,4 @@ if __name__ == "__main__":
 	# print(f"time: {tim.time() - alltimer}")
 
 	# print(landing.t)
-	# landing.plot()
-
-
+	landing.plot()
