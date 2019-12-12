@@ -20,14 +20,27 @@ class SolarSys(SolarSystem):
 	def __init__(self, seed, data_path=None, has_moons=True, verbose=True):
 		SolarSystem.__init__(self, seed, data_path=None, has_moons=True, verbose=True)
 		self.one_year = np.sqrt(self.semi_major_axes[0] ** 3 / self.star_mass)
+		self.one_years = np.sqrt(self.semi_major_axes ** 3 / self.star_mass)
 		self.spin = (
 			self.initial_positions[0] * self.initial_velocities[1]
 			- self.initial_positions[1] * self.initial_velocities[0]
 		)
-
+		
 		self.ordered_planets = np.argsort(
 			np.argsort(np.linalg.norm(self.initial_positions, axis=0))
 		)
+		self.names = np.array([
+			"Vulcan",
+			"Laconia",
+			"Vogsphere",
+			"Ilus",
+			"Alderaan",
+			"Apetos",
+			"Auberon",
+			"Zarkon",
+			"Tellusia",
+			"X",
+		])
 
 	def year_convert_to(self, T, planet="L"):
 		# We kinda screwed the pooch by always using years relative to "our" (Laconias) solar system
@@ -133,18 +146,8 @@ class SolarSys(SolarSystem):
 			return 0
 
 		ordered_planets = np.argsort(np.linalg.norm(self.initial_positions, axis=0))
-		planet_names = [
-			"Vulcan",
-			"Laconia",
-			"Vogsphere",
-			"Ilus",
-			"Alderaan",
-			"Apetos",
-			"Auberon",
-			"Zarkon",
-			"Tellusia",
-			"X",
-		]
+		planet_names = self.names
+
 		if a:
 			try:
 				self.a_pos
