@@ -109,17 +109,6 @@ class Landing:
 		self.v = v[:, -1]
 		self.t = t[-1]
 
-		# self.did_we_crash(faller)
-
-	def did_we_crash(self, result):
-		succ = result.status
-		if succ == 1:
-			print(f"We are at ground, with velocity {self.v}")
-			h0 = np.linalg.norm(self.r[:, -2])
-			h1 = np.linalg.norm(self.r[:, -1])
-			print(result.t)
-			v_rad = (h1 - h0) / (result.t[-1] - result.t[-2])
-			print(f"radial velocity is {v_rad}")
 
 	def boost(self, v):
 		plt.scatter(self.r[0, -1], self.r[1, -1])
@@ -199,81 +188,29 @@ if __name__ == "__main__":
 	lander.boost(boost)
 	t0, r0, v0 = lander.orient()
 
+	"""
+	Landing instance is our landing sequence. 
+	Very simmilar to interplanetary travel, but with air resistance
+	We don't really use it in this code, but it is plottable,
+	so we used it to see where we were when landing.
+	methods boost free_fall and orient is practically exactly same as for 
+	landing_sequence from ast2000tools.space_mission
+	"""
 	landing = Landing(r0, v0, system, Volcano)
-	# Dont do anything above this
-
 
 	lander.adjust_parachute_area(landing.parachute_area)
 
-
-	# for _ in range(4):
-	# 	lander.fall(1e4)
-	# 	landing.free_fall(10_000)
-	# 	t,r,v = lander.orient()
-	# 	lander.boost(-v*0.1)
-	# 	landing.boost(-v*0.1)
-
 	t,r,v = lander.orient()
-	lander.boost(-v*0.4)
-	landing.boost(-v*0.4)
-	lander.fall(8640)
-	landing.free_fall(8640)
+	lander.boost(-v*0.32)
+	lander.fall(10390)
+
 	t,r,v = lander.orient()
 	stabilizer = stabilize_orbit(r,v,system, destination)
 	lander.boost(stabilizer)
-	landing.boost(stabilizer)
 	lander.fall(1000)
-	landing.free_fall(1000)
+
 	t,r,v = lander.orient()
-	# print(np.linalg.norm(r) - system.radii[destination]*1000)
 	lander.launch_lander(-v*0.2)
 	lander.deploy_parachute()
 	lander.fall(10000)
-	# landing.plot()
-	sys.exit()
 
-
-	lander.fall(3000)
-	landing.free_fall(3000)
-	t,r,v = lander.orient()
-	stabilizer = stabilize_orbit(r,v,system, destination)
-	print("\n\n")
-	lander.start_video()
-	lander.boost(stabilizer)
-	t,r,v = lander.orient()
-	lander.boost(-v*0.5)
-	lander.fall(1000)
-	t,r,v = lander.orient()
-	stabilizer = stabilize_orbit(r,v,system,destination)
-	lander.boost(stabilizer)
-	t,r,v = lander.orient()
-	lander.launch_lander(-v*0.2)
-	lander.fall(800)
-	lander.orient()
-	lander.look_in_direction_of_planet()
-	lander.deploy_parachute()
-	lander.fall(10000)
-	lander.orient()
-	lander.finish_video()
-	
-
-	# lander.orient()
-	# lander.fall(100)
-	# lander.orient()
-	# lander.fall(100)
-	# lander.orient()
-
-	# landing.slow_down(0.9)
-	# for _ in range(10):
-		# landing.free_fall(1e4)
-	# for _ in range(2):
-		# landing.free_fall(1e4, 1e-3)
-	# landing.deploy()
-	# landing.slow_down(0.9)
-	# for _ in range(5):
-		# landing.free_fall(1e4, 1e-3)
-	# print(f"time: {tim.time() - timer}")
-	# print(f"time: {tim.time() - alltimer}")
-
-	# print(landing.t)
-	# landing.plot()
