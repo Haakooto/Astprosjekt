@@ -73,7 +73,7 @@ class Landing:
 			if np.linalg.norm(r) <= self.R:
 				return np.zeros(3)
 			else:
-				a = gravity(r) + F_d(r, v)
+				a = gravity(r) + F_d(r, v) / self.m
 				return a
 
 		def at_surface(t, u):
@@ -108,7 +108,6 @@ class Landing:
 		self.r = np.concatenate((self.r, r), axis=1)
 		self.v = v[:, -1]
 		self.t = t[-1]
-		plt.scatter(self.r[0, -1], self.r[1, -1])
 
 		# self.did_we_crash(faller)
 
@@ -123,6 +122,7 @@ class Landing:
 			print(f"radial velocity is {v_rad}")
 
 	def boost(self, v):
+		plt.scatter(self.r[0, -1], self.r[1, -1])
 		self.v += v
 
 	def orient(self):
@@ -205,14 +205,25 @@ if __name__ == "__main__":
 
 	lander.adjust_parachute_area(landing.parachute_area)
 
-	lander.boost(-v0*0.1)
-	landing.boost(-v0*0.1)
 
-	lander.fall(100)
-	landing.free_fall(100)
+	for _ in range(4):
+		lander.fall(1e4)
+		landing.free_fall(10_000)
+		t,r,v = lander.orient()
+		lander.boost(-v*0.1)
+		landing.boost(-v*0.1)
 
+	lander.fall(3000)
+	landing.free_fall(3000)
+	t,r,v = lander.orient()
+	stabilizer = stabilize_orbit(r,v,system, destination)
+	print("\n\n")
+	lander.launch_lander(stabilizer)
 	lander.orient()
-	landing.orient()
+	lander.fall(100)
+	lander.orient()
+	lander.fall(100)
+	lander.orient()
 
 	# landing.slow_down(0.9)
 	# for _ in range(10):
