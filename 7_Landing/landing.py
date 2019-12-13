@@ -206,12 +206,32 @@ if __name__ == "__main__":
 	lander.adjust_parachute_area(landing.parachute_area)
 
 
-	for _ in range(4):
-		lander.fall(1e4)
-		landing.free_fall(10_000)
-		t,r,v = lander.orient()
-		lander.boost(-v*0.1)
-		landing.boost(-v*0.1)
+	# for _ in range(4):
+	# 	lander.fall(1e4)
+	# 	landing.free_fall(10_000)
+	# 	t,r,v = lander.orient()
+	# 	lander.boost(-v*0.1)
+	# 	landing.boost(-v*0.1)
+
+	t,r,v = lander.orient()
+	lander.boost(-v*0.4)
+	landing.boost(-v*0.4)
+	lander.fall(8640)
+	landing.free_fall(8640)
+	t,r,v = lander.orient()
+	stabilizer = stabilize_orbit(r,v,system, destination)
+	lander.boost(stabilizer)
+	landing.boost(stabilizer)
+	lander.fall(1000)
+	landing.free_fall(1000)
+	t,r,v = lander.orient()
+	# print(np.linalg.norm(r) - system.radii[destination]*1000)
+	lander.launch_lander(-v*0.2)
+	lander.deploy_parachute()
+	lander.fall(10000)
+	# landing.plot()
+	sys.exit()
+
 
 	lander.fall(3000)
 	landing.free_fall(3000)
