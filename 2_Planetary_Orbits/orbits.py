@@ -7,7 +7,7 @@ fil ivp.py er nødvendig i samme mappe for en av metodene
 """
 
 import numpy as np
-import sys, os
+import sys, os, time
 import matplotlib.pyplot as plt
 
 import ast2000tools.utils as util
@@ -215,16 +215,18 @@ def verify(yrs=20):
 	system.analytical_orbits()
 	system.differential_orbits(years, dt)
 
+
 	system.verify_planet_positions(years * system.one_year, system.d_pos, f"{path}/planet_trajectories_{years}yr.npy")
 	system.generate_orbit_video(system.time, system.d_pos)
 
-def show_orbits(yrs=30):
+def show_orbits(yrs=50):
 	print("\nPlotting orbits")
 	years = yrs
 	dt = 1e-4
 
 	system.analytical_orbits()
 	system.differential_orbits(years, dt)
+
 	system.plot_orbits(a=True)
 	plt.show()
 
@@ -235,6 +237,7 @@ def do_iterated(yrs=10):
 
 	system.iterated_orbits(years, dt)
 	system.plot_orbits(system.i_pos)
+
 	plt.show()
 
 def animate(yrs=20):
