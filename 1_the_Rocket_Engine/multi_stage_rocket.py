@@ -1,3 +1,7 @@
+"""
+Kode ikke i bruk, ignorer
+"""
+
 import numpy as np
 from Engine import Engine
 from Rocket import Rocket
@@ -8,103 +12,105 @@ from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 import matplotlib.pyplot as plt
 
-class Rocket():
-	def __init__(self, r0, M):
-		self.stages = []
-		self.mass = 0
-		self.r = r0
-		self.R = r0
-		self.v = 0
-		self.M = M
-		self.time = 0
-		self.dt = 0.01
 
-	def add_stage(self, drymass, fuel_mass, engine, name):
-		self.stages.append([drymass, fuel_mass, engine, name])
-		self.mass += drymass + fuel_mass
+class Rocket:
+    def __init__(self, r0, M):
+        self.stages = []
+        self.mass = 0
+        self.r = r0
+        self.R = r0
+        self.v = 0
+        self.M = M
+        self.time = 0
+        self.dt = 0.01
 
-	def next_stage(self, n):
-		return self.stages[n]
+    def add_stage(self, drymass, fuel_mass, engine, name):
+        self.stages.append([drymass, fuel_mass, engine, name])
+        self.mass += drymass + fuel_mass
 
-	def launch(self):
+    def next_stage(self, n):
+        return self.stages[n]
 
-		stage = self.stages[0]
-		print(f"Stage {stages[3]}")
-		engine = stages[2]
-		engine.build()
-		engine.ignite()
-		T = engine.thrust
+    def launch(self):
 
-		mF = stages[1]
-		mass_use = 0
+        stage = self.stages[0]
+        print(f"Stage {stages[3]}")
+        engine = stages[2]
+        engine.build()
+        engine.ignite()
+        T = engine.thrust
 
-		while not self.escaped(self.r, self.v):
+        mF = stages[1]
+        mass_use = 0
 
-			A0 = self.acceleration(self.r, self.mass, T)
-			self.r += self.v * self.dt + 0.5 * A0 * self.dt ** 2
-			A1 = self.acceleration(self.r, self.mass, T)
-			self.v += + 0.5 * (A0 + A1) * self.dt
-			mass_use += engine.consume * self.dt
-			self.mass -= engine.consume * self.dt
+        while not self.escaped(self.r, self.v):
 
-			if mass_use >= mF:
-				print("Stage over, starting next stage")
-				self.statusrapport()
+            A0 = self.acceleration(self.r, self.mass, T)
+            self.r += self.v * self.dt + 0.5 * A0 * self.dt ** 2
+            A1 = self.acceleration(self.r, self.mass, T)
+            self.v += +0.5 * (A0 + A1) * self.dt
+            mass_use += engine.consume * self.dt
+            self.mass -= engine.consume * self.dt
 
-				self.mass -= stage[0]
-				break
+            if mass_use >= mF:
+                print("Stage over, starting next stage")
+                self.statusrapport()
 
-			if self.r < self.R:
-				self.statusrapport()
-				print("RUD in LAO")
-				sys.exit()
+                self.mass -= stage[0]
+                break
 
-			self.time += self.dt
+            if self.r < self.R:
+                self.statusrapport()
+                print("RUD in LAO")
+                sys.exit()
 
+            self.time += self.dt
 
-	self.statusrapport()
-	print("We escaped")
+    self.statusrapport()
+    print("We escaped")
 
-	def escaped(self, r, v):
-		ke = 0.5 * v ** 2
-		pe = const.G * self.M / r
-		return ke > pe
+    def escaped(self, r, v):
+        ke = 0.5 * v ** 2
+        pe = const.G * self.M / r
+        return ke > pe
 
-	def acceleration(self, r, m, T):
-		return (T - const.G * m * self.M / r ** 2) / m
+    def acceleration(self, r, m, T):
+        return (T - const.G * m * self.M / r ** 2) / m
 
-	def statusrapport(self):
-		print(f"Altitude: {self.r - self.R}")
-		print(f"Speed: {self.v}")
-		print(f"Time: {self.time}")
-		print(f"mass: {self.mass}")
+    def statusrapport(self):
+        print(f"Altitude: {self.r - self.R}")
+        print(f"Speed: {self.v}")
+        print(f"Time: {self.time}")
+        print(f"mass: {self.mass}")
 
 
 np.random.seed(14441111)
 seed = util.get_seed("haakooto")
 
+
 def escape_veolocity(r, v, m):
-	ke = 0.5 * v ** 2
-	pe = - G * M / r
-	return ke > pe
+    ke = 0.5 * v ** 2
+    pe = -G * M / r
+    return ke > pe
+
 
 mission = SpaceMission(seed)
 system = SolarSystem(seed)
 
 G = const.G
-M = system.masses[0]*const.m_sun
-R = system.radii[0]*1000
+M = system.masses[0] * const.m_sun
+R = system.radii[0] * 1000
 
 craft_mass = mission.spacecraft_mass
 craft_area = mission.spacecraft_area
 
 # Variables for rocketengine
-T = 10000 #temperature in K
-L = 1e-6 #lengt of box in m
-N = int(1e5) #number of particles
+T = 10000  # temperature in K
+L = 1e-6  # lengt of box in m
+N = int(1e5)  # number of particles
 
 area = np.array([16, 38, 40])
-Ne = area / L ** 2 #numer of engineboxes
+Ne = area / L ** 2  # numer of engineboxes
 nozzle = 1
 
 dt = 1e-12
@@ -126,5 +132,4 @@ rocket.add_stage(1100, F1, engine1, "mercum")
 
 rocket.launch()
 print(rocket.statusrapport())
-
 
