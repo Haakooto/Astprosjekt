@@ -39,7 +39,7 @@ class Engine:
 
         self.m = 0  # maximum particle distance from centre of box
 
-    def ignite(self, verb):
+    def ignite(self, verb=True):
         if verb:
             print("Engine ignited", end="\n\n")
 
@@ -134,8 +134,7 @@ if __name__ == "__main__":
 
     inp = [N, nozzle_size, T, L, dt, ts]
 
-    rocket = Engine()
-    rocket.build(*inp)
+    rocket = Engine(*inp)
     rocket.ignite()
     rocket.test_performance()
     rocket.performance(1100, 12819)
