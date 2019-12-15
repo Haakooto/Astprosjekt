@@ -8,7 +8,7 @@ Koden vi har utviklet i løpet av prosjektet til å svare på oppgaven ligger sa
 
 ## Generelt
 
-All koden vi har skrevet i dette prosjektet har vi skrevet selv, helt uten skjelettkodene. Dette står også i toppen av hver enkeltfil. Koden er strukturert i undermapper, en for hver del. Der kode er plassert i en annen del enn hvor den er spesifisert skal dette være merket med kommentarer. Unntak på dette kan forekomme.
+All koden vi har skrevet i dette prosjektet har vi skrevet selv, helt uten skjelettkodene. Dette står også i toppen av hver enkeltfil. Koden er strukturert i undermapper, en for hver del. Der kode er plassert i en annen del enn hvor den er gitt i oppgaven skal dette være merket med kommentarer. Unntak på dette kan forekomme.
 
 Å putte koden for hver del i egne mapper viste seg å bli litt rotete, men det er nå slik det har blitt, og vi tar oss ikke tid til å fikse på dette, ettersom det fungerer fint.
 
