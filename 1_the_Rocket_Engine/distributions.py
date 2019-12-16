@@ -10,11 +10,9 @@ import sys
 import ast2000tools.constants as const
 from ast2000tools.solar_system import SolarSystem
 
-font = {'family' : 'normal',
-        'weight' : 'normal',
-        'size'   : 18}
+font = {"family": "normal", "weight": "normal", "size": 18}
 
-plt.rc('font', **font)
+plt.rc("font", **font)
 
 n = int(1e5)
 m = const.m_H2
@@ -101,19 +99,20 @@ def test_P_mb():
 def main():
     test_P_g()
     test_P_mb()
-    vx = np.linspace(-2.5E4,2.5E4, 1000)
+    vx = np.linspace(-2.5e4, 2.5e4, 1000)
     plt.plot(vx, max_boz_x(vx, T, m))
     plt.title("Probability distribution of component velocities")
     plt.xlabel("Component velocity (m/s)")
     plt.ylabel("Probability")
     plt.show()
 
-    vx2 = np.linspace(0,3E4, 1000)
+    vx2 = np.linspace(0, 3e4, 1000)
     plt.plot(vx2, max_boz(vx2, T, m))
     plt.title("Probability distribution of absolute velocities")
     plt.xlabel("Absolute velocity (m/s)")
     plt.ylabel("Probability")
     plt.show()
+
 
 if __name__ == "__main__":
     main()
