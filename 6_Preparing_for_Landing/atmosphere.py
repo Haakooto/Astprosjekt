@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 
 import ast2000tools.utils as util
 import ast2000tools.constants as const
-from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
 
@@ -18,6 +17,7 @@ seed = 76117
 
 system = SolarSystem(seed)
 
+# Setting many variables defined in Preparing for the landing
 G = const.G
 M = system.masses[1] * const.m_sun
 m = 26.5 * const.m_p
@@ -30,35 +30,39 @@ c = T0 ** (7 / 5) * (P0) ** (-2 / 5)
 c1 = P0 ** (2 / 7) - 2 * G * m * M / (7 * k * c ** (5 / 7) * R)
 r_maks = 4 * G * M * m * R / (2 * G * M * m - c1 * 7 * k * c ** (5 / 7) * R) - R
 T_maks = 140
+# # We apologize for the inconvenience
 
 
+# pressure in atmosphere
 def P(r):
-	if 0 <= r <= r_maks:
-		return (2 * G * m * M / (7 * k * c ** (5 / 7) * (r + R)) + c1) ** (7 / 2)
-	elif r > r_maks:
-		c2 = np.log(P(r_maks)) - G * M * m / (k * T_maks * (r_maks + R))
-		return np.exp(c2 + G * M * m / (k * T_maks * (r + R)))
+    if 0 <= r <= r_maks:
+        return (2 * G * m * M / (7 * k * c ** (5 / 7) * (r + R)) + c1) ** (7 / 2)
+    elif r > r_maks:
+        c2 = np.log(P(r_maks)) - G * M * m / (k * T_maks * (r_maks + R))
+        return np.exp(c2 + G * M * m / (k * T_maks * (r + R)))
 
 
+# temperature in atmosphere
 def T(r):
-	if 0 <= r <= r_maks:
-		return c ** (5 / 7) * P(r) ** (2 / 7)
-	elif r > r_maks:
-		return T_maks
+    if 0 <= r <= r_maks:
+        return c ** (5 / 7) * P(r) ** (2 / 7)
+    elif r > r_maks:
+        return T_maks
+
 
 Pv = np.vectorize(P)
 Tv = np.vectorize(T)
 
-def density(h):
-		return Pv(h) * m / k / Tv(h)
 
+def density(h):
+    return Pv(h) * m / k / Tv(h)
 
 
 if __name__ == "__main__":
-	rs = np.linspace(0, r_maks + 10000, 10000)
-	plt.plot(rs, Pv(rs))
-	plt.show()
-	plt.plot(rs, Tv(rs))
-	plt.show()
-	plt.plot(rs, density(rs))
-	plt.show()
+    rs = np.linspace(0, r_maks + 10000, 10000)
+    plt.plot(rs, Pv(rs))
+    plt.show()
+    plt.plot(rs, Tv(rs))
+    plt.show()
+    plt.plot(rs, density(rs))
+    plt.show()
