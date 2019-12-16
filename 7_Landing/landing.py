@@ -29,7 +29,11 @@ from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 from ast2000tools.shortcuts import SpaceMissionShortcuts as SMS
 
+font = {'family' : 'normal',
+        'weight' : 'normal',
+        'size'   : 22}
 
+plt.rc('font', **font)
 
 class Landing:
 	def __init__(self, r0, v0, system, mission):
@@ -131,7 +135,18 @@ class Landing:
 		x, y, z = self.r[:, ::cut]
 		plt.plot(x, y)
 		plt.axis("equal")
+		plt.title("Entering very low orbit")
+		plt.xlabel("Distance (m)")
+		plt.ylabel("Distance (m)")
+		plt.text(0.6, 0.7, "Vogsphere", size=20,
+        ha="center", va="center",
+        bbox=dict(boxstyle="round",
+                  ec=(1., 0.5, 0.5),
+                  fc=(1., 0.8, 0.8),
+                  )
+        )
 		plt.show()
+
 
 		time = np.linspace(0, self.t, len(x))
 		height = np.linalg.norm(self.r[:, ::cut], axis=0) - self.R
@@ -145,6 +160,15 @@ def stabilize_orbit(r0, v0, system, dest):
 	vpm = np.sqrt(const.G * system.masses[dest] * const.m_sun / r) * t_tang_normed
 
 	return vpm - v0
+
+def find_landing_site(r, t, system, dest):
+	R = np.linalg.norm(r)
+	omega = 2*np.pi / (system.rotational_periods[dest] * const.day)
+	phi0 = np.arctan(r[1]/r[0])
+	phi = phi0 + omega*t
+	rx = R*np.cos(phi)
+	ry = R*np.sin(phi)
+	return np.asarray([rx, ry, 0]), phi*180/np.pi
 
 if __name__ == "__main__":
 	"""
@@ -167,6 +191,7 @@ if __name__ == "__main__":
 	years = launch_time + 1
 	dt_pr_yr = 1e-5
 	destination = 1
+	r_p = system.radii[destination]*1000
 
 	system.differential_orbits(years, dt_pr_yr)
 
@@ -189,11 +214,11 @@ if __name__ == "__main__":
 	t0, r0, v0 = lander.orient()
 
 	"""
-	Landing instance is our landing sequence. 
+	Landing instance is our landing sequence.
 	Very simmilar to interplanetary travel, but with air resistance
 	We don't really use it in this code, but it is plottable,
 	so we used it to see where we were when landing.
-	methods boost free_fall and orient is practically exactly same as for 
+	methods boost free_fall and orient is practically exactly same as for
 	landing_sequence from ast2000tools.space_mission
 	"""
 	landing = Landing(r0, v0, system, Volcano)
@@ -202,15 +227,41 @@ if __name__ == "__main__":
 
 	t,r,v = lander.orient()
 	lander.boost(-v*0.32)
+	landing.boost(-v*0.32)
 	lander.fall(10390)
+	landing.free_fall(10390)
 
+	t_low_orbit = 5437.8
 	t,r,v = lander.orient()
 	stabilizer = stabilize_orbit(r,v,system, destination)
 	lander.boost(stabilizer)
-	lander.fall(1000)
+	landing.boost(stabilizer)
+	t,r,v = lander.orient()
+	print("\n\nLanding site is at: %.4f deg\n\n" %(find_landing_site(r, t_low_orbit+5600+85.9, system, destination)[1]))
+	lander.look_in_direction_of_planet()
+	lander.take_picture(filename = "pic1.xml")
+	lander.fall(t_low_orbit)
+	landing.free_fall(t_low_orbit)
+	#landing.plot()
 
 	t,r,v = lander.orient()
 	lander.launch_lander(-v*0.2)
 	lander.deploy_parachute()
-	lander.fall(10000)
+	lander.fall(5600)
+	lander.start_video()
+	lander.fall(80)
 
+	t,r,v = lander.orient()
+	omega = 2 * np.pi / (system.rotational_periods[destination] * const.day)
+	r_surf = r/np.linalg.norm(r)*r_p
+	v_surf = omega * np.asarray([-r_surf[1], r_surf[0], 0])
+	v_rel = np.linalg.norm(v-v_surf)
+	g = const.G*system.masses[destination]*const.m_sun/r_p**2
+	if v_rel > 10:
+		h = np.linalg.norm(r) - r_p
+		E = 1/2*mission.lander_mass*(v_rel**2) + mission.lander_mass*g*h*0.75
+		lander.adjust_landing_thruster(force = E/h)
+		lander.activate_landing_thruster()
+
+	lander.fall(100)
+	lander.finish_video()
