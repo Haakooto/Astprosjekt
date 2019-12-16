@@ -147,3 +147,4 @@ if __name__ == "__main__":
     print("exhaust V [m/s]: ", rocket.exhaust_v)
     print(f"mass consumed to reach escape velocity [kg]: {mass_loss}")
     print("Fuel mass remaining [kg]: ", fuel_load - mass_loss)
+    print(1177.33*(1-np.exp(-1187/rocket.exhaust_v)))
