@@ -55,10 +55,13 @@ parts = lambda engine: [engine, fuel_load, Ne]
 def do_launch(Rocket=Rocket, verb=True):
     Volcano = Rocket(*rocket_build(), verbose=verb)
     Epstein = Engine(*engine_build())
+    # Create instance of rocket and engine
 
     Volcano.assemble(*parts(Epstein))
+    # Insert engine into rocket
 
     Volcano.launch()
+    # Perform the launch, where the engine is run to use the performance values in the launch
 
     return Volcano, Epstein
 
@@ -68,7 +71,6 @@ def change_reference(mission, system, rocket, engine, site=0, T0=0):
     Changes reference from planet-centred to sol-centred, and verifies result
     Is generalized for launch-site and launch time, as Part 3 stipulates
     """
-
     # site is angle in star reference, 0 is along x-axis
     # T0 is given in laconia years
 

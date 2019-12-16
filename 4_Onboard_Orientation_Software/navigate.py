@@ -23,98 +23,112 @@ import ast2000tools.constants as const
 from ast2000tools.space_mission import SpaceMission
 from ast2000tools.solar_system import SolarSystem
 
+
 def velocity(mission):
-	phi1, phi2 = util.deg_to_rad(mission.star_direction_angles)
-	u1hat = np.asarray([np.cos(phi1),np.sin(phi1)])
-	u2hat = np.asarray([np.cos(phi2),np.sin(phi2)])
+    phi1, phi2 = util.deg_to_rad(mission.star_direction_angles)
+    u1hat = np.asarray([np.cos(phi1), np.sin(phi1)])
+    u2hat = np.asarray([np.cos(phi2), np.sin(phi2)])
 
-	lamda = mission.reference_wavelength
-	lamda0 = np.asarray([lamda]*2)
-	dlamda = np.asarray(mission.measure_star_doppler_shifts()) - np.asarray(mission.star_doppler_shifts_at_sun)
-	u = const.c*dlamda/lamda0
+    lamda = mission.reference_wavelength
+    lamda0 = np.asarray([lamda] * 2)
+    dlamda = np.asarray(mission.measure_star_doppler_shifts()) - np.asarray(
+        mission.star_doppler_shifts_at_sun
+    )
+    u = const.c * dlamda / lamda0
 
-	if phi1 > phi2:
-		diff = phi2 - phi1
-	else:
-		diff = phi1 - phi2
-	v = 1/np.sin(diff)*np.asarray([np.sin(phi2)*u[0] - np.sin(phi1)*u[1], - np.cos(phi2)*u[0] + np.cos(phi1)*u[1]])
+    if phi1 > phi2:
+        diff = phi2 - phi1
+    else:
+        diff = phi1 - phi2
+    v = (  # Nice formatting by Flake8
+        1
+        / np.sin(diff)
+        * np.asarray(
+            [
+                np.sin(phi2) * u[0] - np.sin(phi1) * u[1],
+                -np.cos(phi2) * u[0] + np.cos(phi1) * u[1],
+            ]
+        )
+    )
 
-	return v * const.yr / const.AU
+    return v * const.yr / const.AU
 
 
 def position(system, mission):
 
-	time_idx = np.argmin(abs(system.time - mission.time_after_launch)) - 1
-	dt = 1E-3
+    time_idx = np.argmin(abs(system.time - mission.time_after_launch)) - 1
+    dt = 1e-3
 
-	r = mission.measure_distances()
-	m = np.argsort(r)
+    r = mission.measure_distances()
+    m = np.argsort(r)
 
-	spos = np.zeros((2, system.number_of_planets + 1))
-	spos[:,:system.number_of_planets] = system.d_pos[:,:,time_idx]
+    spos = np.zeros((2, system.number_of_planets + 1))
+    spos[:, : system.number_of_planets] = system.d_pos[:, :, time_idx]
 
+    N = 1000
+    angle = np.linspace(0, 2 * np.pi, N)
 
-	N = 1000
-	angle = np.linspace(0,2*np.pi,N)
-
-	circle1, circle2, circle3 = [np.asarray([spos[:,m[i]]]*N) + np.transpose(r[m[i]]*np.asarray([np.cos(angle), np.sin(angle)])) for i in range(1,4)]
-	for p in circle1:
-		for q in circle2:
-			if np.linalg.norm(p-q) < 1e-3:
-				for s in circle3:
-					if np.linalg.norm(p-s) < 1e-3:
-						pos = s
-						return pos
+    circle1, circle2, circle3 = [
+        np.asarray([spos[:, m[i]]] * N)
+        + np.transpose(r[m[i]] * np.asarray([np.cos(angle), np.sin(angle)]))
+        for i in range(1, 4)
+    ]
+    for p in circle1:
+        for q in circle2:
+            if np.linalg.norm(p - q) < 1e-3:
+                for s in circle3:
+                    if np.linalg.norm(p - s) < 1e-3:
+                        pos = s
+                        return pos
 
 
 def navigate(system, mission, path, doangle=True):
-	if doangle:
-		references = np.load(f"{path}/ang_ori_refs.npy")
-		mission.take_picture(full_sky_image_path=f"{path}/himmelkule.npy")
-		image = Image.open("sky_picture.png")
+    if doangle:  # this part takes a loe time
+        references = np.load(f"{path}/ang_ori_refs.npy")
+        mission.take_picture(full_sky_image_path=f"{path}/himmelkule.npy")
+        image = Image.open("sky_picture.png")
 
-		angle = AO.determine_angle(image, references)
-	else:
-		angle = 0
+        angle = AO.determine_angle(image, references)
+    else:
+        angle = 0
 
-	v = velocity(mission)
-	pos = position(system, mission)
+    v = velocity(mission)
+    pos = position(system, mission)
 
-	return [pos, v, angle]
-
-
+    return [pos, v, angle]
 
 
 if __name__ == "__main__":
-	seed = 76117
-	path = "./../verification_data"
+    seed = 76117
+    path = "./../verification_data"
 
-	mission = SpaceMission(seed, path, False, True)
-	system = SolarSys(seed, path, False, True)
+    # running mission until we can verify
+    mission = SpaceMission(seed, path, False, True)
+    system = SolarSys(seed, path, False, True)
 
-	years = 10
-	dt_pr_yr = 1e-4
+    years = 10
+    dt_pr_yr = 1e-4
 
-	site = np.pi
-	launch_time = np.pi
+    site = np.pi
+    launch_time = np.pi
 
-	system.differential_orbits(years, dt_pr_yr)
+    system.differential_orbits(years, dt_pr_yr)
 
-	Volcano, Epstein = launch.do_launch()
-	launch.change_reference(mission, system, Volcano, Epstein, site, launch_time)
-	pos_ref = mission._position_after_launch
-	vel_ref = mission._velocity_after_launch
+    Volcano, Epstein = launch.do_launch()
+    launch.change_reference(mission, system, Volcano, Epstein, site, launch_time)
+    pos_ref = mission._position_after_launch
+    vel_ref = mission._velocity_after_launch
 
-	X = navigate(system, mission, path)
-	mission.verify_manual_orientation(*X)
+    X = navigate(system, mission, path)
+    mission.verify_manual_orientation(*X)
 
-	print(f"Position after launch: {X[0]}AU")
-	print(f"Velocity after launch: {X[1]}AU/yr")
-	print(f"Angle after launch: {X[2]}deg")
+    print(f"Position after launch: {X[0]}AU")
+    print(f"Velocity after launch: {X[1]}AU/yr")
+    print(f"Angle after launch: {X[2]}deg")
 
-	print(f"Relative deviation from correct position: {pos_ref / X[0] - 1}")
-	print(f"Relative deviation from correct velocity: {vel_ref / X[1] - 1}")
+    print(f"Relative deviation from correct position: {pos_ref / X[0] - 1}")
+    print(f"Relative deviation from correct velocity: {vel_ref / X[1] - 1}")
 
-	print(f"Absolute deviation from correct position: {abs(pos_ref - X[0])}")
-	print(f"Absolute deviation from correct velocity: {abs(vel_ref - X[1])}")
+    print(f"Absolute deviation from correct position: {abs(pos_ref - X[0])}")
+    print(f"Absolute deviation from correct velocity: {abs(vel_ref - X[1])}")
 

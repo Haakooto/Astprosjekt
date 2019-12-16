@@ -10,11 +10,9 @@ import sys
 import ast2000tools.constants as const
 from ast2000tools.solar_system import SolarSystem
 
-font = {'family' : 'normal',
-        'weight' : 'normal',
-        'size'   : 18}
+font = {"family": "normal", "weight": "normal", "size": 18}
 
-plt.rc('font', **font)
+plt.rc("font", **font)
 
 n = int(1e5)
 m = const.m_H2
@@ -24,12 +22,14 @@ sig_b = np.sqrt(k * T / m)
 
 
 def gauss(x, sig, mu):
+    # Normal distribution
     return (np.sqrt(2 * np.pi) * sig) ** (-1) * np.exp(
         -0.5 * (x - mu) ** 2 * sig ** (-2)
     )
 
 
 def max_boz(V, T, m):
+    # Maxwell Boltzman distribution for 3-d velocity
     return (
         (m / (2 * np.pi * k * T)) ** (3 / 2)
         * np.exp(-m * V ** 2 / (2 * k * T))
@@ -40,10 +40,12 @@ def max_boz(V, T, m):
 
 
 def max_boz_x(v, T, m):
+    # Maxwell Boltzman for 1-d velocity
     return np.sqrt(m / (2 * np.pi * k * T)) * np.exp(-0.5 * m * v ** 2 / (k * T))
 
 
 def P_g(a, b, mu, sig):
+    # Interval on gaussian distribution
     dx = (b - a) / n
     x = np.linspace(a, b, n)
     y = gauss(x, sig, mu)
@@ -51,6 +53,7 @@ def P_g(a, b, mu, sig):
 
 
 def P_mb(a, b, F=True, T=T, m=m):
+    # interval on maxwell boltzman distribution
     assert a < b, "a must be smaller than b and not the same"
 
     if F:
@@ -96,19 +99,20 @@ def test_P_mb():
 def main():
     test_P_g()
     test_P_mb()
-    vx = np.linspace(-2.5E4,2.5E4, 1000)
+    vx = np.linspace(-2.5e4, 2.5e4, 1000)
     plt.plot(vx, max_boz_x(vx, T, m))
     plt.title("Probability distribution of component velocities")
     plt.xlabel("Component velocity (m/s)")
     plt.ylabel("Probability")
     plt.show()
 
-    vx2 = np.linspace(0,3E4, 1000)
+    vx2 = np.linspace(0, 3e4, 1000)
     plt.plot(vx2, max_boz(vx2, T, m))
     plt.title("Probability distribution of absolute velocities")
     plt.xlabel("Absolute velocity (m/s)")
     plt.ylabel("Probability")
     plt.show()
+
 
 if __name__ == "__main__":
     main()

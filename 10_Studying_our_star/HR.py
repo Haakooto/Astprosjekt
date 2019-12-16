@@ -1,3 +1,9 @@
+"""
+Plasserer stjerna vår i HR-diagram, og viser dens utvikling
+
+Nesten ingenting er egenskrevet, noen små endringer i klassen fra emnesiden
+"""
+
 import sys
 import numpy as np
 import matplotlib.pyplot as plt

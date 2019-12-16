@@ -49,6 +49,7 @@ class Engine:
             # particles outside box, [particle][coord outside]
 
             absvel = abs(self.V[outside_box])
+            # velocites in coordinate particle is outside of box
 
             if t != 0:  # at t = 0 all are inside
                 self.avgV[t - 1] = np.mean(absvel)
@@ -66,6 +67,8 @@ class Engine:
 
         self.pressure = self.N * k_B * self.T * self.L ** (-3)  # [N/m**2]
         self.pres_thrust = self.pressure * self.nozzle * self.L ** 2 / 6  # [N]
+
+        self.exhaust_v = np.mean(self.avgV)
 
     def test_performance(self):  # Some tests to validate simulation
         if self.m > self.l * 1.1:
@@ -111,10 +114,6 @@ class Engine:
         plt.legend(loc=1)
         plt.show()
 
-    def performance(self, drymass, dv):
-        self.exhaustv = np.mean(self.avgV)
-        self.dm = drymass * np.exp(dv / self.exhaustv) - drymass
-
 
 # Setting constants
 k_B = const.k_B  # boltzmann constant
@@ -137,7 +136,6 @@ if __name__ == "__main__":
     rocket = Engine(*inp)
     rocket.ignite()
     rocket.test_performance()
-    rocket.performance(1100, 12819)
     print("Thrust [N]: ", rocket.thrust)
     print("mass consumed [kg/s]: ", rocket.consume)
     print("exhaust V [m/s]: ", rocket.exhaustv)
