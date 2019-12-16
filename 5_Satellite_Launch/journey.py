@@ -72,7 +72,7 @@ class Rocket(Rocket):
 		"""
 		Initiate travel phase
 		"""
-		if verbose: 
+		if verbose:
 			print("\nStarting interplanetary travel\n")
 
 		self.system = system
@@ -329,7 +329,6 @@ if __name__ == "__main__":
 	Volcano, Epstein = launch.do_launch(Rocket=Rocket, verb=False)
 	launch.change_reference(mission, system, Volcano, Epstein, site, launch_time)
 	mission.verify_manual_orientation(*navigate(system, mission, path))
-	sys.exit()
 
 	Volcano.begin_interplanetary_journey(system, mission, destination=destination, k=1)
 	# print(travel.remaining_fuel_mass)
@@ -337,6 +336,28 @@ if __name__ == "__main__":
 	r_pos = np.asarray([0.12979, 0.157862])
 	r_vel = np.asarray([-6.74248, 6.84742])
 	Volcano.teleport(time, r_pos, r_vel)
+
+	t_idx = np.argmin(abs(system.time - time))
+	planet_pos = system.d_pos[:, destination, t_idx]
+	R = r_pos - planet_pos
+	R *= const.AU
+	print(R)	#position of spacecraft relative to Vogsphere [m]
+
+	planet_vel = (system.d_pos[:,destination, t_idx+1] - planet_pos)/(system.one_year*dt_pr_yr)
+	v = r_vel - planet_vel
+	v = v*const.AU/const.yr
+	print(v)	#Velocity relative to Vogsphere [m/s]
+
+	m = const.G*system.masses[destination]*const.m_sun
+	r = np.linalg.norm(R)
+	tang_norm = np.asarray([-R[1], R[0]])/r
+	r_norm = R/r
+	v_stable = np.sqrt(m/r)*tang_norm
+	stabilizer = v_stable - v
+	v_theta = np.dot(v,tang_norm)
+	v_r = np.dot(v, r_norm)
+	h = r*v_theta
+	p = h**2/m
 
 	# dv1 = Volcano.leave_orbit_boost()
 	# Volcano.boost(dv1)
@@ -348,11 +369,8 @@ if __name__ == "__main__":
 	# print(Volcano.travel_time, "The traveled time")
 	# shortcut.place_spacecraft_in_unstable_orbit(Volcano.travel_time, destination)
 
-	t_idx = np.argmin(abs(system.time-Volcano.travel_time))
-	R = r_pos - system.d_pos[:, Volcano.dest, t_idx]
-	R *= const.AU
-	print(R)
-	
+
+
 
 
 	# mission2 = shortcut.mission
