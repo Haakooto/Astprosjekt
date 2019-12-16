@@ -78,7 +78,7 @@ class Rocket:
     def fuel_use(self, dv):
         # Equation derived in part 5, "Interplanetary spacetravel"
         dv = np.linalg.norm(dv)
-        dm = (self.mass + self.fuel) * (1 - np.exp[-dv / self.engine.exhaust_v])
+        dm = (self.mass + self.fuel) * (1 - np.exp(-dv / self.engine.exhaust_v))
 
         return dm
 
