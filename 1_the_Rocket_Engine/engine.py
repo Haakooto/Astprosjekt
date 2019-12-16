@@ -122,21 +122,28 @@ mass = const.m_H2  # particle mass
 if __name__ == "__main__":
 
     # Variables
-    T = 3000  # temperature in K
-    L = 1e-6  # lengt of box in m
+    T = 2800  # temperature in K
+    L = 1e-7  # lengt of box in m
     N = int(1e5)  # number of praticles
 
-    nozzle_size = 0.4  # area of nozzle in L**2
+    nozzle_size = 0.25  # area of nozzle in L**2
 
     dt = 1e-12
     ts = 1000
 
     inp = [N, nozzle_size, T, L, dt, ts]
 
+    rocket_area = 16
+    throttle = 1 / 12
+    time = 343.82
+    fuel_load = 50000
+
     rocket = Engine(*inp)
     rocket.ignite()
     rocket.test_performance()
+    mass_loss = rocket.consume*time*rocket_area/L**2*throttle
     print("Thrust [N]: ", rocket.thrust)
     print("mass consumed [kg/s]: ", rocket.consume)
-    print("exhaust V [m/s]: ", rocket.exhaustv)
-    print(f"mass consumed to reach escape velocity: {rocket.dm}")
+    print("exhaust V [m/s]: ", rocket.exhaust_v)
+    print(f"mass consumed to reach escape velocity [kg]: {mass_loss}")
+    print("Fuel mass remaining [kg]: ", fuel_load - mass_loss)
