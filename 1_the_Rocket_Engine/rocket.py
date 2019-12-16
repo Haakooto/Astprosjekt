@@ -2,6 +2,10 @@
 Program for rakett klasse
 
 All kode er egenskrevet
+
+I resultatene presenterer vi plot av akselerasjon, fart og posisjon.
+For dette måtte vi skrive om koden til å ta vare på verdiene for r og v,
+men klarte senere å slette denne koden.
 """
 
 import numpy as np
@@ -25,9 +29,9 @@ class Rocket:
         self.verb = verbose
 
     def assemble(self, engine, fuel_mass, N_engines):
-        self.engine = engine
+        self.engine = engine  # instance of engine-class
         self.fuel = fuel_mass
-        self.Ne = N_engines
+        self.Ne = N_engines  # Number of engine boxes
 
     def launch(self):
         self.engine.ignite(self.verb)
@@ -62,12 +66,21 @@ class Rocket:
             self.statusrapport()
 
     def escaped(self):
+        # kinetic and gravitational potential energy
         ke = 0.5 * self.v ** 2
         pe = const.G * self.M / self.r
         return ke > pe
 
     def acceleration(self):
+        # equation 6 in "Modelling a rocket launch"
         return self.thrust / (self.mass + self.fuel) - const.G * self.M / self.r ** 2
+
+    def fuel_use(self, dv):
+        # Equation derived in part 5, "Interplanetary spacetravel"
+        dv = np.linalg.norm(dv)
+        dm = (self.mass + self.fuel) * (1 - np.exp[-dv / self.engine.exhaust_v])
+
+        return dm
 
     def statusrapport(self):
         print(self.status[0], "\n")

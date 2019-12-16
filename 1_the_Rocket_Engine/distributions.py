@@ -17,12 +17,14 @@ sig_b = np.sqrt(k * T / m)
 
 
 def gauss(x, sig, mu):
+    # Normal distribution
     return (np.sqrt(2 * np.pi) * sig) ** (-1) * np.exp(
         -0.5 * (x - mu) ** 2 * sig ** (-2)
     )
 
 
 def max_boz(V, T, m):
+    # Maxwell Boltzman distribution for 3-d velocity
     return (
         (m / (2 * np.pi * k * T)) ** (3 / 2)
         * np.exp(-m * V ** 2 / (2 * k * T))
@@ -33,10 +35,12 @@ def max_boz(V, T, m):
 
 
 def max_boz_x(v, T, m):
+    # Maxwell Boltzman for 1-d velocity
     return np.sqrt(m / (2 * np.pi * k * T)) * np.exp(-0.5 * m * v ** 2 / (k * T))
 
 
 def P_g(a, b, mu, sig):
+    # Interval on gaussian distribution
     dx = (b - a) / n
     x = np.linspace(a, b, n)
     y = gauss(x, sig, mu)
@@ -44,6 +48,7 @@ def P_g(a, b, mu, sig):
 
 
 def P_mb(a, b, F=True, T=T, m=m):
+    # interval on maxwell boltzman distribution
     assert a < b, "a must be smaller than b and not the same"
 
     if F:
